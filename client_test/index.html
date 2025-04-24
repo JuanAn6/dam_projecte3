@@ -1,0 +1,58 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Cliente WebSocket</title>
+</head>
+<body>
+  <h1>Cliente WebSocket</h1>
+  <input type="text" id="msg" placeholder="Escribí un mensaje">
+  <button onclick="sendMessage()">Enviar</button>
+  <pre id="log"></pre>
+
+  <script>
+    const socket = new WebSocket('ws://10.200.1.4:8080');
+    const log = msg => document.getElementById('log').textContent += msg + '\n';
+
+    socket.onopen = () => {
+      log('✅ Conectado al servidor');
+    };
+
+    socket.onmessage = event => {
+      log('📥 Recibido: ' + event.data);
+    };
+
+    socket.onclose = () => {
+      log('❌ Conexión cerrada');
+    };
+
+    socket.onerror = error => {
+      log('⚠️ Error: ' + error.message);
+    };
+
+    function sendMessage() {
+        const input = document.getElementById('msg');
+        
+        // let obj = {
+        //     action:'login', 
+        //     login: {
+        //         user : 'Juan',
+        //         pass : 'juan1234'
+        //     }
+        // }
+        
+        let obj = {
+            action:'continents'
+        }
+
+
+        socket.send(JSON.stringify(obj));
+
+
+        log('📨 Enviado: ' + input.value);
+
+    }
+  </script>
+</body>
+</html>
