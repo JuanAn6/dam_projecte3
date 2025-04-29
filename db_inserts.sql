@@ -50,7 +50,7 @@ INSERT INTO Pais (id, nom, continent_id, imatge) VALUES
 (35, 'China', 5, 'placeholder.png'),
 (36, 'Middle East', 5, 'placeholder.png'),
 (37, 'India', 5, 'placeholder.png'),
-(38, 'Southeast Asia', 5, 'placeholder.png'),
+(38, 'Sian', 5, 'placeholder.png'),
 
 (39, 'Indonesia', 6, 'placeholder.png'),
 (40, 'New Guinea', 6, 'placeholder.png'),
@@ -175,3 +175,8 @@ INSERT INTO Frontera (pais1_id, pais2_id) VALUES
 (40, 42), -- New Guinea - Eastern Australia
 
 (41, 42); -- Western Australia - Eastern Australia
+
+
+
+INSERT INTO `usuaris` (`id`, `nom`, `login`, `password`, `avatar`, `wins`, `games`) 
+VALUES ('1', 'Joan', 'joan', 'joan', '', '0', '0'), ('2', 'Cristian', 'cristian', 'cristian', '', '0', '0');

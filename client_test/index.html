@@ -9,7 +9,7 @@
   <h1>Cliente WebSocket</h1>
   <input type="text" id="msg" placeholder="Escribí un mensaje">
   <button onclick="sendMessage()">Enviar</button>
-  <pre id="log"></pre>
+  <p id="log"></p>
 
   <script>
     const socket = new WebSocket('ws://10.200.1.4:8080');
@@ -37,15 +37,15 @@
         // let obj = {
         //     action:'login', 
         //     login: {
-        //         user : 'Juan',
-        //         pass : 'juan1234'
+        //         user : 'joan',
+        //         password : 'joan'
         //     }
         // }
         
         let obj = {
-            action:'continents'
+            token : "joan1745949826708",
+            action:'countrys'
         }
-
 
         socket.send(JSON.stringify(obj));
 
