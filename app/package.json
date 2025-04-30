@@ -10,7 +10,9 @@
   "license": "ISC",
   "dependencies": {
     "mysql2": "^3.14.0",
+    "pm2": "^6.0.5",
     "redis": "^4.7.0",
+    "uuid": "^11.1.0",
     "ws": "^8.18.1"
   }
 }

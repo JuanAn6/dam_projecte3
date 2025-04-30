@@ -59,12 +59,12 @@ const deletetToken = (token) => {
 	}
 }
 
-const insertUserToken = (user_id, token) => {
+const insertUserToken = (user_id, token, clientId) => {
 	try {
 		let aux = new Date().getTime(); // Get current timestamp in milliseconds
 		let timestamp = aux+1000*60*60*24
 		db.query('DELETE FROM session WHERE usuari_id = ? ',[user_id]);
-		const [rows] = db.query('INSERT INTO session (usuari_id,token,expires) VALUES ( ? , ? , ?)',[user_id, token, timestamp]);
+		const [rows] = db.query('INSERT INTO session (usuari_id,token,expires,uid) VALUES ( ? , ? , ?)',[user_id, token, timestamp, clientId]);
 		if (rows.affectedRows > 0) {
 			return true;
 		} else {
@@ -88,14 +88,44 @@ const getSessionByToken = async (token) => {
 	}
 }
 
+const updateSession = async (token, uid) => {
+	try {
+		const [rows] = await db.query('UPDATE session SET uid = ?  WHERE token = ?', [uid, token]);
+		if (rows.length > 0) {
+			return rows[0];
+		} else {
+			return null;
+		}
+	} catch (err) {
+		console.error('❌ Error!', err.message);
+	}
+}
+
 const createSalaDB = async (data) => {
 	try {
-		const [rows] = await db.query('INSERT INTO sala (date, nom, token, max_players, admin_id) VALUES (?, ?)', [data.name, data.description]);
+		const [rows] = await db.query('INSERT INTO partida (date, nom, token, max_players, admin_id, estat_torn) VALUES (?, ?, ?, ?, ?, 1)', 
+			[data.date, data.nom, data.token, data.max_players, data.admin_id]);
+			console.log("rows", rows);
 		if (rows.affectedRows > 0) {
-			return true;
+			return rows;
 		} else {
 			return false;
 		}
+	} catch (err) {
+		console.error('❌ Error!', err.message);
+	}
+}
+
+const getSalasDB = async () => {
+	try {
+		const [rows] = await db.query('SELECT * FROM partida WHERE estat_torn = 1');
+		
+		if (rows.length > 0) {
+			return rows;
+		} else {
+			return [];
+		}
+
 	} catch (err) {
 		console.error('❌ Error!', err.message);
 	}
@@ -110,5 +140,8 @@ module.exports = {
 	getUserByLogin,
 	deletetToken,
 	insertUserToken,
-	getSessionByToken
+	getSessionByToken,
+	createSalaDB,
+	getSalasDB,
+	updateSession
 };

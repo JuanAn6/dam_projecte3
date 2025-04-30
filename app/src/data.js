@@ -1,14 +1,44 @@
 const managerDB = require("../server/managerDB");
 
 async function getCountrys(){
-    return await managerDB.getCountrysDB();
+    try{
+        let obj = {status : 200, response: 0 };
+        obj.response = await managerDB.getCountrysDB();
+        return obj;
+    }catch(e){
+        console.log('❌ Error! '+e.message);
+        return {status: 500, response: 'Error at server! '+e.message };
+    }
 }
 
 async function getContinents(){
-    return await managerDB.getContinentsDB();
+    try{
+        let obj = {status : 200, response: 0 };
+        obj.response = await managerDB.getContinentsDB();
+        return obj;
+    }catch(e){
+        console.log('❌ Error! '+e.message);
+        return {status: 500, response: 'Error at server! '+e.message };
+    }
+
+}
+
+
+async function getSalas(){
+    try{
+        let obj = {status : 200, response: {} };
+        obj.response.salas = await managerDB.getSalasDB();
+        return obj;
+    }catch(e){
+        console.log('❌ Error! '+e.message);
+        return {status: 500, response: 'Error at server! '+e.message };
+    }
+
 }
 
 
 module.exports = {
-    getCountrys,getContinents
+    getCountrys,
+    getContinents,
+    getSalas,
 };

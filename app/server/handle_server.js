@@ -1,37 +1,40 @@
-const TEST = require('../src/data');
+const GLOBAL = require('../src/data');
 const MENU = require('../src/menu');
 
 const handleAction = async(data) => {
-    let obj = {status : 200, response: 0 }
+    let obj;
     let aux = null;
     switch(data.action){
         case 'login': 
-            console.log(data);
-            return await MENU.login(data.login.user, data.login.password);
+            obj = await MENU.login(data.login.user, data.login.password);
+            break;
         
         //MENU
-
-        case 'create':
-            return await MENU.createSala(data.menu);
-
-        //TEST
+        case 'lobbys':
+            obj = await GLOBAL.getSalas(data);
+            break;
+        case 'create_lobby':
+            obj = await MENU.createSala(data);
+            break;
         
+        
+        //GLOBAL
         case 'test':
-            obj.response = await managerDB.testDB();
-            return obj;
+            obj = await managerDB.testDB();
+            break;
         case 'countrys':
-            aux = await TEST.getCountrys();
-            obj.response = aux;
-            return obj;
+            obj = await GLOBAL.getCountrys();
+            break;
         case 'continents':
-            aux = await TEST.getContinents();
-            obj.response = aux;
-            return obj;
+            obj = await GLOBAL.getContinents();
+            break;
 
         default:
             return { status: 300, response: 'Unknown action!' };
 
     }
+
+    return obj;
 }
 
 module.exports = {
