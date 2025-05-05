@@ -1,0 +1,5 @@
+pm2 start server.js --name server_risk
+
+pm2 logs server_risk
+
+C:\Users\Juan Antonio\.pm2\logs

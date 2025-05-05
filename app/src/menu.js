@@ -1,5 +1,5 @@
 const managerDB = require("../server/managerDB");
-const server = require("../server/server");
+const SERVER = require("../server/server");
 
 async function login(user, password, clientId){
 
@@ -19,7 +19,7 @@ async function login(user, password, clientId){
         let now = new Date();
         let token = aux_user.login+""+now.getTime();
         obj.status = 200;
-        obj.response = {message: "Login success!", token: token};  
+        obj.response = {message: "Login success!", token: token, id: aux_user.id };  
         
         managerDB.insertUserToken(aux_user.id, token, clientId);
         return obj;
@@ -30,23 +30,7 @@ async function login(user, password, clientId){
     return obj
 }
 
-async function checkToken(token, uid){
-    if(token != null){
 
-        let session = await managerDB.getSessionByToken(token);
-
-        console.log("session!:", session);
-
-        if(session != null){
-            await managerDB.updateSession(token, uid);
-            return true;
-        }else{
-            return false;
-        }
-    }else{
-        return false;
-    }
-}
 
 
 async function createSala(data){
@@ -94,6 +78,103 @@ async function createSala(data){
 }
 
 
+async function joinSala(data){
+    let obj = {status : 200, response: 0 }
+
+    if(data.info.sala == undefined || data.info.sala == null){
+        obj.status = 500;
+        obj.response = "Sala not found!";
+        return obj;
+    }
+
+    let players = await managerDB.getPlayersFromSala(data.info.sala);
+
+    let sala = await managerDB.getSalaById(data.info.sala);
+    if(sala == null){
+        obj.status = 500;
+        obj.response = "Sala not found!";
+        return obj;
+    }
+
+    if(players >= sala.max_players){
+        obj.status = 400;
+        obj.response = "Sala full!";
+        return obj;
+    }
+
+    let user = await managerDB.getSessionByToken(data.token);
+    if(user == null){
+        obj.status = 401;
+        obj.response = "Token invalid!";
+        return obj;
+    }
+    
+    let result = await managerDB.joinSalaDB(data.info.sala, user.usuari_id, players+1 );
+
+    let players_info = await managerDB.getPlayersInfoFromSala(data.info.sala);
+
+    if(result == null){
+        obj.status = 500;
+        obj.response = "Error joining sala!";
+        return obj;
+    }else{
+
+        handleUpdatePlayersSala(data.info.sala);
+        
+        obj.response = {message:"Joined sala!", sala : sala, players: players_info};
+        return obj;
+    }
+
+}
+
+async function leaveSala(data){
+    let obj = {status : 200, response: 0 }
+
+    if(data.info.sala == undefined || data.info.sala == null){
+        obj.status = 500;
+        obj.response = "Sala not found!";
+        return obj;
+    }
+
+    let user = await managerDB.getSessionByToken(data.token);
+    if(user == null){
+        obj.status = 401;
+        obj.response = "Token invalid!";
+        return obj;
+    }
+    
+    
+    let result = await managerDB.leaveSalaDB(data.info.sala, user.usuari_id);
+    
+    if(result == null){
+        obj.status = 500;
+        obj.response = "Error leaving sala!";
+        return obj;
+    }else{
+        
+        handleUpdatePlayersSala(data.info.sala);
+
+        obj.response = {message:"Left sala!"};
+        return obj;
+    }
+
+}
+
+
+async function handleUpdatePlayersSala(sala_id){
+    let players_info = await managerDB.getPlayersInfoFromSala(sala_id);
+
+    players_info.forEach(async (player) => {
+        let session = await managerDB.getSessionByUserId(player.sfkUser_id);
+        SERVER.sendToClient(session.uid, JSON.stringify({action: 'update_players', players: players_info}));
+    });
+
+    return {players: players_info};
+}
+
 module.exports = {
-    login,checkToken,createSala
+    login,
+    createSala,
+    joinSala,
+    leaveSala
 };

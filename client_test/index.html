@@ -42,9 +42,29 @@
         //     }
         // }
         
+        // let obj = {
+        //   token : "juan1746456920871",
+        //   action:'show_clients',
+        //   info : {
+        //     sala: 4,
+        //   }
+        // }
+        
+        // let obj = {
+        //   token : "juan1746456920871",
+        //   action:'join',
+        //   info : {
+        //     sala: 4,
+        //   }
+        // }
+        
         let obj = {
-            token : "juan1746031631147",
-            action:'lobbys',
+          token : "juan1746456920871",
+          //action:'leave_sala',
+          action:'join',
+          info : {
+            sala: 4,
+          }
         }
 
         socket.send(JSON.stringify(obj));

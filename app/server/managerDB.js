@@ -19,7 +19,7 @@ const getCountrysDB = async () => {
 		return rows;
 
 	} catch (err) {
-		console.error('❌ Error!', err.message);
+		console.error('❌ Error getCountrysDB!', err.message);
 	}
 
 }
@@ -29,7 +29,7 @@ const getContinentsDB = async () => {
 		const [rows] = await db.query('SELECT * FROM continent');
 		return rows;
 	} catch (err) {
-		console.error('❌ Error!', err.message);
+		console.error('❌ Error getContinentsDB!', err.message);
 	}
 }
 
@@ -42,7 +42,7 @@ const getUserByLogin = async (user) => {
 			return null;
 		}
 	} catch (err) {
-		console.error('❌ Error!', err.message);
+		console.error('❌ Error getUserByLogin!', err.message);
 	}
 }
 
@@ -55,23 +55,23 @@ const deletetToken = (token) => {
 			return false;
 		}
 	} catch (err) {
-		console.error('❌ Error!', err.message);
+		console.error('❌ Error deletetToken!', err.message);
 	}
 }
 
-const insertUserToken = (user_id, token, clientId) => {
+const  insertUserToken = async (user_id, token, clientId) => {
 	try {
 		let aux = new Date().getTime(); // Get current timestamp in milliseconds
-		let timestamp = aux+1000*60*60*24
-		db.query('DELETE FROM session WHERE usuari_id = ? ',[user_id]);
-		const [rows] = db.query('INSERT INTO session (usuari_id,token,expires,uid) VALUES ( ? , ? , ?)',[user_id, token, timestamp, clientId]);
+		let timestamp = aux+1000*60*60*24;
+		await db.query('DELETE FROM session WHERE usuari_id = ? ',[user_id]);
+		const [rows] = await db.query('INSERT INTO session (usuari_id,token,expires,uid) VALUES ( ? , ? , ? , ? )',[user_id, token, timestamp, clientId]);
 		if (rows.affectedRows > 0) {
 			return true;
 		} else {
 			return false;
 		}
 	} catch (err) {
-		console.error('❌ Error!', err.message);
+		console.error('❌ Error insertUserToken!', err);
 	}
 }
 
@@ -84,7 +84,7 @@ const getSessionByToken = async (token) => {
 			return null;
 		}
 	} catch (err) {
-		console.error('❌ Error!', err.message);
+		console.error('❌ Error getSessionByToken!', err.message);
 	}
 }
 
@@ -97,7 +97,7 @@ const updateSession = async (token, uid) => {
 			return null;
 		}
 	} catch (err) {
-		console.error('❌ Error!', err.message);
+		console.error('❌ Error updateSession!', err.message);
 	}
 }
 
@@ -112,13 +112,14 @@ const createSalaDB = async (data) => {
 			return false;
 		}
 	} catch (err) {
-		console.error('❌ Error!', err.message);
+		console.error('❌ Error createSalaDB!', err.message);
 	}
 }
 
 const getSalasDB = async () => {
 	try {
-		const [rows] = await db.query('SELECT * FROM partida WHERE estat_torn = 1');
+		const [rows] = await db.query(`SELECT * , (SELECT count(*) FROM jugador j WHERE skfPartida_id = p.id ) AS connected 
+			FROM partida p WHERE estat_torn = 1`);
 		
 		if (rows.length > 0) {
 			return rows;
@@ -127,10 +128,118 @@ const getSalasDB = async () => {
 		}
 
 	} catch (err) {
-		console.error('❌ Error!', err.message);
+		console.error('❌ Error getSalasDB!', err.message);
 	}
 }
 
+const getSalaById = async (sala_id) => {
+	try {
+		const [rows] = await db.query(`SELECT * , (SELECT count(*) FROM jugador j WHERE skfPartida_id = p.id ) AS connected 
+			FROM partida p WHERE p.id = ?`, [sala_id]);
+		
+		if (rows.length > 0) {
+			return rows[0];
+		} else {
+			return [];
+		}
+
+	} catch (err) {
+		console.error('❌ Error getSalasDB!', err.message);
+	}
+}
+
+const getPlayersFromSala = async (sala_id) => {
+	try {
+		const [rows] = await db.query(`SELECT count(*) as num FROM jugador j WHERE skfPartida_id = ?`, [sala_id]);
+		
+		if (rows.length > 0) {
+			return rows[0].num;
+		} else {
+			return [];
+		}
+
+	} catch (err) {
+		console.error('❌ Error getPlayersFromSala!', err.message);
+	}
+}
+
+
+const joinSalaDB = async (sala_id, user_id, num) => {
+
+	//Gestionar el numero del jugador por si abandona restablecer los numeros en la sala???
+
+	try {
+		const [rows] = await db.query(`INSERT INTO jugador (skfUser_id, skfPartida_id, skfNumero) VALUES (?, ?, ?)`, [user_id, sala_id, num]);
+		
+		if (rows.length > 0) {
+			return rows;
+		} else {
+			return [];
+		}
+
+	} catch (err) {
+		console.error('❌ Error joinSalaDB!', err.message);
+	}
+}
+
+const leaveSalaDB = async (sala_id, user_id) => {
+	try {
+		const [rows] = await db.query(`DELETE FROM jugador WHERE skfUser_id = ? AND skfPartida_id = ?`, [user_id, sala_id]);
+		
+		if (rows.length > 0) {
+			return rows;
+		} else {
+			return [];
+		}
+
+	} catch (err) {
+		console.error('❌ Error leaveSalaDB!', err.message);
+	}
+}
+
+
+
+const getPlayersInfoFromSala = async (sala_id) => {
+	try {
+		const [rows] = await db.query(`SELECT id, nom, avatar, wins, games FROM usuaris WHERE id IN( SELECT skfUser_id FROM jugador j WHERE skfPartida_id = ? )`, [sala_id]);
+		
+		if (rows.length > 0) {
+			return rows;
+		} else {
+			return [];
+		}
+
+	} catch (err) {
+		console.error('❌ Error getPlayersInfoFromSala!', err.message);
+	}
+}
+
+
+const getSessionByUid = async (uid) => {
+	try {
+		const [rows] = await db.query('SELECT * FROM session WHERE uid = ?', [uid]);
+		if (rows.length > 0) {
+			return rows;
+		} else {
+			return "a";
+		}
+	} catch (err) {
+		console.error('❌ Error getSessionByUid!', err.message);
+	}
+}
+
+const getSessionByUserId = async (usuari_id) => {
+	try {
+		const [rows] = await db.query('SELECT * FROM session WHERE usuari_id = ?', [usuari_id]);
+		if (rows.length > 0) {
+			return rows;
+		} else {
+			return "a";
+		}
+	} catch (err) {
+		console.error('❌ Error getSessionByUserId!', err.message);
+	}
+}
 
 
 module.exports = {
@@ -143,5 +252,12 @@ module.exports = {
 	getSessionByToken,
 	createSalaDB,
 	getSalasDB,
-	updateSession
+	updateSession,
+	getPlayersFromSala,
+	getPlayersInfoFromSala,
+	joinSalaDB,
+	getSalaById,
+	leaveSalaDB,
+	getSessionByUid,
+	getSessionByUserId
 };
