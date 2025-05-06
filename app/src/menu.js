@@ -40,7 +40,7 @@ async function createSala(data){
 
     if(data.info.max_players == undefined || data.info.max_players == null){
         data.info.max_players = 6;
-    }else if (data.info.max_players >= 1){
+    }else if (data.info.max_players <= 1){
         data.info.max_players = 2;
     }else if (data.info.max_players > 6){
         data.info.max_players = 6;
@@ -78,7 +78,7 @@ async function createSala(data){
 }
 
 
-async function joinSala(data){
+async function joinSala(data, sendToClient){
     let obj = {status : 200, response: 0 }
 
     if(data.info.sala == undefined || data.info.sala == null){
@@ -112,6 +112,8 @@ async function joinSala(data){
     let result = await managerDB.joinSalaDB(data.info.sala, user.usuari_id, players+1 );
 
     let players_info = await managerDB.getPlayersInfoFromSala(data.info.sala);
+    
+    sala = await managerDB.getSalaById(data.info.sala);
 
     if(result == null){
         obj.status = 500;
@@ -119,7 +121,7 @@ async function joinSala(data){
         return obj;
     }else{
 
-        handleUpdatePlayersSala(data.info.sala);
+        handleUpdatePlayersSala(data.info.sala, sendToClient);
         
         obj.response = {message:"Joined sala!", sala : sala, players: players_info};
         return obj;
@@ -127,46 +129,47 @@ async function joinSala(data){
 
 }
 
-async function leaveSala(data){
+async function leaveSala(data, sendToClient){
     let obj = {status : 200, response: 0 }
 
     if(data.info.sala == undefined || data.info.sala == null){
         obj.status = 500;
-        obj.response = "Sala not found!";
+        obj.response = {message:"Sala not found!", left: -1};;
         return obj;
     }
 
     let user = await managerDB.getSessionByToken(data.token);
     if(user == null){
         obj.status = 401;
-        obj.response = "Token invalid!";
+        obj.response = {message:"Token invalid!", left: -1};;
         return obj;
     }
     
-    
+    console.log("leave sala:", data.info.sala, user.usuari_id);
+
     let result = await managerDB.leaveSalaDB(data.info.sala, user.usuari_id);
     
     if(result == null){
         obj.status = 500;
-        obj.response = "Error leaving sala!";
+        obj.response = {message:"Error leaving sala!", left: -1};
         return obj;
     }else{
         
-        handleUpdatePlayersSala(data.info.sala);
+        handleUpdatePlayersSala(data.info.sala, sendToClient);
 
-        obj.response = {message:"Left sala!"};
+        obj.response = {message:"Left sala!", left: 1};
         return obj;
     }
 
 }
 
 
-async function handleUpdatePlayersSala(sala_id){
+async function handleUpdatePlayersSala(sala_id, sendToClient){
     let players_info = await managerDB.getPlayersInfoFromSala(sala_id);
 
     players_info.forEach(async (player) => {
-        let session = await managerDB.getSessionByUserId(player.sfkUser_id);
-        SERVER.sendToClient(session.uid, JSON.stringify({action: 'update_players', players: players_info}));
+        let session = await managerDB.getSessionByUserId(player.id);
+        sendToClient(session.uid, JSON.stringify({response: {action: 'update_players', players: players_info}} ));
     });
 
     return {players: players_info};

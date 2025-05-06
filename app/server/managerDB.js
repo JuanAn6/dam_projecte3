@@ -232,7 +232,7 @@ const getSessionByUserId = async (usuari_id) => {
 	try {
 		const [rows] = await db.query('SELECT * FROM session WHERE usuari_id = ?', [usuari_id]);
 		if (rows.length > 0) {
-			return rows;
+			return rows[0];
 		} else {
 			return "a";
 		}

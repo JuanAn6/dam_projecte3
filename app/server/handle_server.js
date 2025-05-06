@@ -2,7 +2,7 @@ const GLOBAL = require('../src/data');
 const MENU = require('../src/menu');
 const managerDB = require('./managerDB');
 
-const handleAction = async(data) => {
+const handleAction = async(data, sendToClient) => {
     let obj;
     let aux = null;
     switch(data.action){
@@ -18,10 +18,10 @@ const handleAction = async(data) => {
             obj = await MENU.createSala(data);
             break;
         case 'join':
-            obj = await MENU.joinSala(data);
+            obj = await MENU.joinSala(data, sendToClient);
             break;
         case 'leave_sala':
-            obj = await MENU.leaveSala(data);
+            obj = await MENU.leaveSala(data, sendToClient);
             break;
         
         //GLOBAL

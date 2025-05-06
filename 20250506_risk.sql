@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 30-04-2025 a las 17:51:36
+-- Tiempo de generación: 06-05-2025 a las 19:01:13
 -- Versión del servidor: 10.4.28-MariaDB
 -- Versión de PHP: 8.2.4
 
@@ -301,9 +301,9 @@ CREATE TABLE `session` (
   `id` bigint(20) NOT NULL,
   `usuari_id` bigint(20) NOT NULL,
   `token` varchar(255) NOT NULL,
-  `expires` timestamp NULL DEFAULT NULL
+  `expires` timestamp NULL DEFAULT NULL,
+  `uid` varchar(1024) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
 
 -- --------------------------------------------------------
 
@@ -348,7 +348,8 @@ CREATE TABLE `usuaris` (
 
 INSERT INTO `usuaris` (`id`, `nom`, `login`, `password`, `avatar`, `wins`, `games`) VALUES
 (1, 'Joan', 'joan', 'joan', '', 0, 0),
-(2, 'Cristian', 'cristian', 'cristian', '', 0, 0);
+(2, 'Cristian', 'cristian', 'cristian', '', 0, 0),
+(3, 'Juan', 'juan', 'juan', '', 0, 0);
 
 --
 -- Índices para tablas volcadas
@@ -443,12 +444,6 @@ ALTER TABLE `usuaris`
 --
 
 --
--- AUTO_INCREMENT de la tabla `session`
---
-ALTER TABLE `session`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
-
---
 -- AUTO_INCREMENT de la tabla `carta`
 --
 ALTER TABLE `carta`
@@ -460,41 +455,47 @@ ALTER TABLE `carta`
 ALTER TABLE `continent`
   MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
-  --
+--
 -- AUTO_INCREMENT de la tabla `estats`
 --
 ALTER TABLE `estats`
   MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
-  --
+--
 -- AUTO_INCREMENT de la tabla `jugador`
 --
 ALTER TABLE `jugador`
   MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
 
-  --
+--
 -- AUTO_INCREMENT de la tabla `pais`
 --
 ALTER TABLE `pais`
   MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
 
-  --
--- AUTO_INCREMENT de la tabla `tipuscarta`
 --
-ALTER TABLE `tipuscarta`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
-
-  --
 -- AUTO_INCREMENT de la tabla `partida`
 --
 ALTER TABLE `partida`
   MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
 
-  --
+--
+-- AUTO_INCREMENT de la tabla `session`
+--
+ALTER TABLE `session`
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT de la tabla `tipuscarta`
+--
+ALTER TABLE `tipuscarta`
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
 -- AUTO_INCREMENT de la tabla `usuaris`
 --
 ALTER TABLE `usuaris`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- Restricciones para tablas volcadas
@@ -556,7 +557,7 @@ ALTER TABLE `partida`
 --
 ALTER TABLE `session`
   ADD CONSTRAINT `session_ibfk_1` FOREIGN KEY (`usuari_id`) REFERENCES `usuaris` (`id`);
-
+COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;

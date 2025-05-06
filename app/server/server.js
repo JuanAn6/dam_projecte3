@@ -13,6 +13,7 @@ const clients = new Map(); // ID -> WebSocket
 
 
 async function sendToClient(clientId, message) {
+	console.log(`📤 Send to client ${clientId}`);
     const client = clients.get(clientId);
     if (client && client.readyState == WebSocket.OPEN) {
         client.send(message);
@@ -70,7 +71,7 @@ wss.on('connection', ws => {
 						return;
 					}else{
 						console.log("Token valid! "+token);
-						let result = await handleAction(data);
+						let result = await handleAction(data, sendToClient);
 						console.log("📨 Send! + "+JSON.stringify(result));
 						ws.send(JSON.stringify(result));
 					}
