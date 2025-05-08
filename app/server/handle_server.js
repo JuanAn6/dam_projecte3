@@ -23,7 +23,14 @@ const handleAction = async(data, sendToClient) => {
         case 'leave_sala':
             obj = await MENU.leaveSala(data, sendToClient);
             break;
-        
+        //MATCH
+        case 'start_match':
+            obj = await MENU.startMatch(data, sendToClient);
+            break;
+
+
+
+            
         //GLOBAL
         case 'test':
             obj = await managerDB.testDB();

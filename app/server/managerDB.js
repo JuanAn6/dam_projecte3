@@ -165,11 +165,25 @@ const getPlayersFromSala = async (sala_id) => {
 
 
 const joinSalaDB = async (sala_id, user_id, num) => {
-
+	let new_num = num;
 	//Gestionar el numero del jugador por si abandona restablecer los numeros en la sala???
+	try {
+		getPlayersInfoFromSala(sala_id).then( async (players) =>{
+			console.log("players", players);
+
+			new_num = players.length+1;
+			for (let index = 0; index < players.length; index++) {
+				const player = players[index];
+				await db.query(`UPDATE jugador SET skfNumero = ? WHERE skfUser_id = ? AND skfPartida_id = ?`,[index + 1, player.id, sala_id]);
+			}
+		})
+		
+	} catch (err) {
+		console.error('❌ Error Updating the numbers!', err.message);
+	}
 
 	try {
-		const [rows] = await db.query(`INSERT INTO jugador (skfUser_id, skfPartida_id, skfNumero) VALUES (?, ?, ?)`, [user_id, sala_id, num]);
+		const [rows] = await db.query(`INSERT INTO jugador (skfUser_id, skfPartida_id, skfNumero) VALUES (?, ?, ?)`, [user_id, sala_id, new_num]);
 		
 		if (rows.length > 0) {
 			return rows;
