@@ -13,6 +13,10 @@ const clients = new Map(); // ID -> WebSocket
 
 
 async function sendToClient(clientId, message) {
+	if (typeof message !== 'string') {
+		message = JSON.stringify(message);
+	}
+	//console.log('📤 Send to client:', clientId, message);
 	console.log(`📤 Send to client ${clientId}`);
     const client = clients.get(clientId);
     if (client && client.readyState == WebSocket.OPEN) {

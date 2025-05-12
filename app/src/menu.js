@@ -169,7 +169,7 @@ async function handleUpdatePlayersSala(sala_id, sendToClient){
 
     players_info.forEach(async (player) => {
         let session = await managerDB.getSessionByUserId(player.id);
-        sendToClient(session.uid, JSON.stringify({response: {action: 'update_players', players: players_info}} ));
+        sendToClient(session.uid, {response: {action: 'update_players', players: players_info}});
     });
 
     return {players: players_info};

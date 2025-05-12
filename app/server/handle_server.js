@@ -1,6 +1,7 @@
 const GLOBAL = require('../src/data');
 const MENU = require('../src/menu');
 const managerDB = require('./managerDB');
+const MATCH = require('../src/match');
 
 const handleAction = async(data, sendToClient) => {
     let obj;
@@ -25,7 +26,7 @@ const handleAction = async(data, sendToClient) => {
             break;
         //MATCH
         case 'start_match':
-            obj = await MENU.startMatch(data, sendToClient);
+            obj = await MATCH.startMatch(data, sendToClient);
             break;
 
 
