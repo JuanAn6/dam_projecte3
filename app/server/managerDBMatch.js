@@ -1,10 +1,8 @@
 const db = require('./db');
 
-
-const getSalasDB = async () => {
+const updateSalaStatusTorn = async (sala_id, status) => {
 	try {
-		const [rows] = await db.query(`SELECT * , (SELECT count(*) FROM jugador j WHERE skfPartida_id = p.id ) AS connected 
-			FROM partida p WHERE estat_torn = 1`);
+		const [rows] = await db.query(`UPDATE partida SET estat_torn = ? WHERE id = ? `, [status, sala_id] );
 		
 		if (rows.length > 0) {
 			return rows;
@@ -16,5 +14,4 @@ const getSalasDB = async () => {
 		console.error('❌ Error getSalasDB!', err.message);
 	}
 }
-
-module.exports = { };
+module.exports = { updateSalaStatusTorn };

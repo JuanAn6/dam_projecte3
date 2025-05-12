@@ -102,14 +102,14 @@ async function joinSala(data, sendToClient){
         return obj;
     }
 
-    let user = await managerDB.getSessionByToken(data.token);
-    if(user == null){
+    let session = await managerDB.getSessionByToken(data.token);
+    if(session == null){
         obj.status = 401;
         obj.response = "Token invalid!";
         return obj;
     }
     
-    let result = await managerDB.joinSalaDB(data.info.sala, user.usuari_id, players+1 );
+    let result = await managerDB.joinSalaDB(data.info.sala, session.usuari_id, players+1 );
 
     let players_info = await managerDB.getPlayersInfoFromSala(data.info.sala);
     
@@ -144,8 +144,6 @@ async function leaveSala(data, sendToClient){
         obj.response = {message:"Token invalid!", left: -1};;
         return obj;
     }
-    
-    console.log("leave sala:", data.info.sala, user.usuari_id);
 
     let result = await managerDB.leaveSalaDB(data.info.sala, user.usuari_id);
     
@@ -155,7 +153,29 @@ async function leaveSala(data, sendToClient){
         return obj;
     }else{
         
-        handleUpdatePlayersSala(data.info.sala, sendToClient);
+        
+        let sala = await managerDB.getSalaById(data.info.sala);
+        if(sala.admin_id == user.usuari_id){
+
+            let players = await managerDB.getPlayersInfoFromSala(data.info.sala);
+             
+            if(players.length > 0){
+                let new_admin = players.find(player => player.id != user.usuari_id);
+                console.log("new_admin", new_admin);
+                if (new_admin != undefined) {
+                    sala.admin_id = new_admin.id;
+                    await managerDB.updateSalaAdmin(data.info.sala, new_admin.id);
+                }   
+            }else{
+                managerDB.deleteSala(data.info.sala);
+                console.log("Sala deleted!");
+            }
+
+
+            handleChangeAdminSala(data.info.sala, sendToClient);
+        }else{
+            handleUpdatePlayersSala(data.info.sala, sendToClient);
+        }
 
         obj.response = {message:"Left sala!", left: 1};
         return obj;
@@ -170,6 +190,20 @@ async function handleUpdatePlayersSala(sala_id, sendToClient){
     players_info.forEach(async (player) => {
         let session = await managerDB.getSessionByUserId(player.id);
         sendToClient(session.uid, {response: {action: 'update_players', players: players_info}});
+    });
+
+    return {players: players_info};
+}
+
+
+async function handleChangeAdminSala(sala_id, sendToClient){
+    let players_info = await managerDB.getPlayersInfoFromSala(sala_id);
+     
+    let sala = await managerDB.getSalaById(sala_id);
+
+    players_info.forEach(async (player) => {
+        let session = await managerDB.getSessionByUserId(player.id);
+        sendToClient(session.uid, {response: {action: 'update_admin',sala: sala, players: players_info}});
     });
 
     return {players: players_info};

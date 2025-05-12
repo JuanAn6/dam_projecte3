@@ -166,6 +166,7 @@ const getPlayersFromSala = async (sala_id) => {
 
 const joinSalaDB = async (sala_id, user_id, num) => {
 	let new_num = num;
+	
 	//Gestionar el numero del jugador por si abandona restablecer los numeros en la sala???
 	try {
 		getPlayersInfoFromSala(sala_id).then( async (players) =>{
@@ -180,6 +181,24 @@ const joinSalaDB = async (sala_id, user_id, num) => {
 		
 	} catch (err) {
 		console.error('❌ Error Updating the numbers!', err.message);
+	}
+
+	let insert = true;
+	//Comprobar si el jugador ya esta en la sala
+	try{
+		const [rows] = await db.query(`SELECT * FROM jugador WHERE skfUser_id = ? AND skfPartida_id = ?`, [user_id, sala_id]);
+		if (rows.length > 0) {
+			insert = false;
+		} 
+	} catch (err) {
+		console.error('❌ Error Checking if player is already in the sala!', err.message);
+	}
+
+	if(!insert){
+		console.log("Player already in the sala!");
+		return[];
+	}else{
+		console.log("Adding player to the sala!");
 	}
 
 	try {
@@ -197,7 +216,26 @@ const joinSalaDB = async (sala_id, user_id, num) => {
 }
 
 const leaveSalaDB = async (sala_id, user_id) => {
+	//Gestionar el numero del jugador por si abandona restablecer los numeros en la sala???
 	try {
+		getPlayersInfoFromSala(sala_id).then( async (players) =>{
+			players = players.filter(player => player.id != user_id);
+			console.log("players", players);
+
+			new_num = players.length+1;
+			for (let index = 0; index < players.length; index++) {
+				const player = players[index];
+				player.skfNumero = index+1;
+				await db.query(`UPDATE jugador SET skfNumero = ? WHERE skfUser_id = ? AND skfPartida_id = ?`,[index + 1, player.id, sala_id]);
+			}
+			console.log("Players UPDATED! ", players);
+		})
+		
+	} catch (err) {
+		console.error('❌ Error Updating the numbers!', err.message);
+	}
+	
+	try {		
 		const [rows] = await db.query(`DELETE FROM jugador WHERE skfUser_id = ? AND skfPartida_id = ?`, [user_id, sala_id]);
 		
 		if (rows.length > 0) {
@@ -209,6 +247,8 @@ const leaveSalaDB = async (sala_id, user_id) => {
 	} catch (err) {
 		console.error('❌ Error leaveSalaDB!', err.message);
 	}
+
+	
 }
 
 
@@ -255,6 +295,32 @@ const getSessionByUserId = async (usuari_id) => {
 	}
 }
 
+const updateSalaAdmin = async (sala_id, admin_id) => {
+	console.log("updateSalaAdmin", sala_id, admin_id);
+	try {
+		const [rows] = await db.query('UPDATE partida SET admin_id = ? WHERE id = ?', [admin_id, sala_id]);
+		if (rows.affectedRows > 0) {
+			return true;
+		} else {
+			return false;
+		}
+	} catch (err) {
+		console.error('❌ Error updateSalaAdmin!', err.message);
+	}
+}
+
+const deleteSala = async (sala_id) => {
+	try {
+		const [rows] = await db.query('DELETE FROM partida WHERE id = ?', [sala_id]);
+		if (rows.affectedRows > 0) {
+			return true;
+		} else {
+			return false;
+		}
+	} catch (err) {
+		console.error('❌ Error deleteSala!', err.message);
+	}
+}
 
 module.exports = {
   	testDB,
@@ -273,5 +339,7 @@ module.exports = {
 	getSalaById,
 	leaveSalaDB,
 	getSessionByUid,
-	getSessionByUserId
+	getSessionByUserId,
+	updateSalaAdmin,
+	deleteSala
 };
