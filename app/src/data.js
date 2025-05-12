@@ -6,7 +6,7 @@ async function getCountrys(){
         obj.response = await managerDB.getCountrysDB();
         return obj;
     }catch(e){
-        console.log('❌ Error getCountrys! '+e.message);
+        console.error('❌ Error getCountrys! '+e.message);
         return {status: 500, response: 'Error at server! '+e.message };
     }
 }
@@ -17,7 +17,7 @@ async function getContinents(){
         obj.response = await managerDB.getContinentsDB();
         return obj;
     }catch(e){
-        console.log('❌ Error getContinents! '+e.message);
+        console.error('❌ Error getContinents! '+e.message);
         return {status: 500, response: 'Error at server! '+e.message };
     }
 
@@ -30,7 +30,7 @@ async function getSalas(){
         obj.response.salas = await managerDB.getSalasDB();
         return obj;
     }catch(e){
-        console.log('❌ Error getSalas! '+e.message);
+        console.error('❌ Error getSalas! '+e.message);
         return {status: 500, response: 'Error at server! '+e.message };
     }
 

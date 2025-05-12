@@ -105,7 +105,6 @@ const createSalaDB = async (data) => {
 	try {
 		const [rows] = await db.query('INSERT INTO partida (date, nom, token, max_players, admin_id, estat_torn) VALUES (?, ?, ?, ?, ?, 1)', 
 			[data.date, data.nom, data.token, data.max_players, data.admin_id]);
-			console.log("rows", rows);
 		if (rows.affectedRows > 0) {
 			return rows;
 		} else {
@@ -170,8 +169,6 @@ const joinSalaDB = async (sala_id, user_id, num) => {
 	//Gestionar el numero del jugador por si abandona restablecer los numeros en la sala???
 	try {
 		getPlayersInfoFromSala(sala_id).then( async (players) =>{
-			console.log("players", players);
-
 			new_num = players.length+1;
 			for (let index = 0; index < players.length; index++) {
 				const player = players[index];
@@ -220,15 +217,14 @@ const leaveSalaDB = async (sala_id, user_id) => {
 	try {
 		getPlayersInfoFromSala(sala_id).then( async (players) =>{
 			players = players.filter(player => player.id != user_id);
-			console.log("players", players);
-
+			
 			new_num = players.length+1;
 			for (let index = 0; index < players.length; index++) {
 				const player = players[index];
 				player.skfNumero = index+1;
 				await db.query(`UPDATE jugador SET skfNumero = ? WHERE skfUser_id = ? AND skfPartida_id = ?`,[index + 1, player.id, sala_id]);
 			}
-			console.log("Players UPDATED! ", players);
+
 		})
 		
 	} catch (err) {

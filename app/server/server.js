@@ -16,7 +16,6 @@ async function sendToClient(clientId, message) {
 	if (typeof message !== 'string') {
 		message = JSON.stringify(message);
 	}
-	//console.log('📤 Send to client:', clientId, message);
 	console.log(`📤 Send to client ${clientId}`);
     const client = clients.get(clientId);
     if (client && client.readyState == WebSocket.OPEN) {
@@ -30,7 +29,7 @@ async function showClients() {
 	console.log('🟢 Clients connected: ', clients.size);
 	clients.forEach( async (client, id) => {
 		let clientInfo = await managerDB.getSessionByUid(id);
-		console.log(`Client ID: ${id}, Session: ${JSON.stringify(clientInfo)}`);
+		console.log(`🙎 Client ID: ${id}, Session: ${JSON.stringify(clientInfo)}`);
 	});
 }
 
@@ -46,8 +45,6 @@ wss.on('connection', ws => {
     const clientId = uuidv4();
     clients.set(clientId, ws);
     console.log(`🟢 Client connected with ID: ${clientId}`);
-
-	//console.log('Clients', clients);
 
 	ws.send(JSON.stringify({success:200, response:'Hello from the server' }));
 
@@ -74,7 +71,7 @@ wss.on('connection', ws => {
 						ws.send(JSON.stringify(val));
 						return;
 					}else{
-						console.log("Token valid! "+token);
+						console.log("🟢 Token valid! "+token);
 						let result = await handleAction(data, sendToClient);
 						console.log("📨 Send! + "+JSON.stringify(result));
 						ws.send(JSON.stringify(result));
@@ -94,7 +91,7 @@ wss.on('connection', ws => {
 			}
 
 		}catch(e){
-			console.log('❌ Error at server! '+e.message);
+			console.error('❌ Error at server! '+e.message);
 			return {status: 500, response: 'Error at server! '+e.message };
 		}
 
