@@ -265,6 +265,22 @@ const getPlayersInfoFromSala = async (sala_id) => {
 }
 
 
+const getInfoPlayersSalaUltimateNoBugs = async (sala_id) => {
+	try {
+		const [rows] = await db.query(`SELECT * FROM jugador j WHERE skfPartida_id = ? `, [sala_id]);
+		
+		if (rows.length > 0) {
+			return rows;
+		} else {
+			return [];
+		}
+
+	} catch (err) {
+		console.error('❌ Error getInfoPlayersSalaUltimateNoBugs!', err.message);
+	}
+}
+
+
 const getSessionByUid = async (uid) => {
 	try {
 		const [rows] = await db.query('SELECT * FROM session WHERE uid = ?', [uid]);
@@ -337,5 +353,6 @@ module.exports = {
 	getSessionByUid,
 	getSessionByUserId,
 	updateSalaAdmin,
-	deleteSala
+	deleteSala,
+	getInfoPlayersSalaUltimateNoBugs
 };

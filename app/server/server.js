@@ -73,8 +73,10 @@ wss.on('connection', ws => {
 					}else{
 						console.log("🟢 Token valid! "+token);
 						let result = await handleAction(data, sendToClient);
-						console.log("📨 Send! + "+JSON.stringify(result));
-						ws.send(JSON.stringify(result));
+						if(result != null){
+							console.log("📨 Send! + "+JSON.stringify(result));
+							ws.send(JSON.stringify(result));
+						}
 					}
 				}
 			}else if (data.action == 'login'){

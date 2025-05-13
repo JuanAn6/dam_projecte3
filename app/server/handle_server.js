@@ -24,11 +24,17 @@ const handleAction = async(data, sendToClient) => {
         case 'leave_sala':
             obj = await MENU.leaveSala(data, sendToClient);
             break;
+
+
+
         //MATCH
         case 'start_match':
             obj = await MATCH.startMatch(data, sendToClient);
             break;
 
+        case 'deploy':
+            await MATCH.faseDeploy(data, sendToClient);
+            return null;
 
 
             
