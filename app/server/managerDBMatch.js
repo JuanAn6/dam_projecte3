@@ -62,8 +62,8 @@ const InsertUpdateOkupaCountry = async (player_id, country, trops) => {
 		const [rows] = await db.query(`SELECT * FROM okupa WHERE player_id = ? and pais_id = ? `, [player_id, pais.id] );
 
 		if (rows.length > 0) {
-			//let aux_trops = rows[0].tropes + trops;
-			let aux_trops = trops;
+			let aux_trops = rows[0].tropes + trops;
+			//let aux_trops = trops;
 
 			const [rows2] = await db.query(`UPDATE okupa SET tropes = ? WHERE player_id = ? and pais_id = ? `, [aux_trops, player_id, pais.id] );
 			if (rows2.affectedRows > 0) {

@@ -9,7 +9,7 @@
   <h1>Cliente WebSocket</h1>
   <input type="text" id="msg" placeholder="Escribí un mensaje">
   <button onclick="sendMessage()">Enviar</button>
-  <p id="log"></p>
+  <pre id="log" style="white-space: pre-wrap;"></pre>
 
   <script>
     const socket = new WebSocket('ws://10.200.1.4:8080');

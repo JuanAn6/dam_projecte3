@@ -71,14 +71,25 @@ async function faseDeploy(data, sendToClient) {
     await matchDB.InsertUpdateOkupaCountry(player.id, data.info.country, 1);
 
     //Incrementar el turno del player
-
+    await incrementPlayerTorn(sala_id);
 
     //Recojer el estado global de la sala para enviar
     let status_sala = await getGlobalStateSala(sala_id);
-    
     console.log("STATUS SALA: ",status_sala);
-
     sendStatusGlobalSala('deploy', sala_id, sendToClient, { setup: status_sala })
+
+}
+
+async function incrementPlayerTorn(sala_id) {
+    let sala = await managerDB.getSalaById(sala_id);
+    let players = await managerDB.getInfoPlayersSalaUltimateNoBugs(sala_id);
+
+    let actual_index = players.findIndex((ele) => ele.skfUser_id == sala.torn_player_id );    
+    let new_index = (actual_index+1) % players.length;
+
+    await matchDB.updateSalaPlayerTorn(sala_id, players[new_index].skfUser_id);
+    
+    console.log("PLAYER TORN UPDATED: ", players[new_index]);
 
 }
 
