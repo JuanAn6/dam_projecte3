@@ -89,10 +89,14 @@ const InsertUpdateOkupaCountry = async (player_id, country, trops) => {
 
 const getCountrysFromPlayer = async (player_id) => {
 	try {
-		const [rows] = await db.query(`SELECT pais_id AS country, tropes AS troops FROM okupa WHERE player_id = ? `, [player_id] );
+		const [rows] = await db.query(`SELECT 
+			pais_id AS country_id , tropes AS troops, abr AS country 
+			FROM okupa JOIN pais ON okupa.pais_id = pais.id WHERE player_id = ?
+			`, [player_id] );
+
 		if (rows.length > 0) {
 			console.log("ASDSADSADSADSADAS: ", rows);
-			return rows[0];
+			return rows;
 		} else {
 			return null;
 		}

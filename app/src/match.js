@@ -91,7 +91,7 @@ async function getGlobalStateSala(sala_id) {
     
     for(let i = 0 ; i < players.length; i++){    
         let countries = await matchDB.getCountrysFromPlayer(players[i].id);
-        obj_response.push({player_id: players[i].id, countries: countries});    
+        obj_response.push({ player_id: players[i].skfUser_id, countries: countries });    
     }
 
     return obj_response;
