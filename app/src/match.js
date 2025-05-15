@@ -45,7 +45,13 @@ async function startMatch(data , sendToClient) {
  
 }
 
-
+/**
+ * Brodcast to every player at the sala
+ * @param {*} action 
+ * @param {*} sala_id 
+ * @param {*} sendToClient 
+ * @param {*} info 
+ */
 async function sendStatusGlobalSala(action, sala_id, sendToClient, info){
     let sala = await managerDB.getSalaById(sala_id);
 
@@ -60,26 +66,46 @@ async function sendStatusGlobalSala(action, sala_id, sendToClient, info){
 
 }
 
-async function faseDeploy(data, sendToClient) {
 
-    let sala_id = data.info.sala;
-    let sala = await managerDB.getSalaById(sala_id);
-    let player = await matchDB.getPLayerByUserId(sala.torn_player_id, sala_id);
-    
-    console.log("Get fase Deploy!!!", data, sala, player);
-    
-    await matchDB.InsertUpdateOkupaCountry(player.id, data.info.country, 1);
+/**
+ * Check if the user who has done the action 
+ * @param {*} token 
+ * @param {*} sala_id 
+ * @param {*} sala 
+ * @returns 
+ */
+async function checkValidUserTorn(token, sala_id = null, sala = null){
+    if(sala == null){
+        sala = await managerDB.getSalaById(sala_id);
+    }
 
-    //Incrementar el turno del player
-    await incrementPlayerTorn(sala_id);
+    let session = await managerDB.getSessionByToken(token);
+    if(session == null) return false;
 
-    //Recojer el estado global de la sala para enviar
-    let status_sala = await getGlobalStateSala(sala_id);
-    console.log("STATUS SALA: ",status_sala);
-    sendStatusGlobalSala('deploy', sala_id, sendToClient, { setup: status_sala })
-
+    return sala.torn_player_id == session.usuari_id;
 }
 
+/**
+ * Check if the sala has the valid status for the action!
+ * @param {*} sala_id 
+ * @param {*} sala 
+ * @param {*} status 
+ * @returns 
+ */
+async function checkSalaStateIsAtThePhase(sala_id = null, sala = null, status){
+    if(sala == null){
+        sala = await managerDB.getSalaById(sala_id);
+    }
+
+    return sala.estat_torn == status;
+}
+
+
+/**
+ * Increments the torn of the player to the next in the list
+ * Always starts with the admin and then folows the number order at database.
+ * @param {*} sala_id 
+ */
 async function incrementPlayerTorn(sala_id) {
     let sala = await managerDB.getSalaById(sala_id);
     let players = await managerDB.getInfoPlayersSalaUltimateNoBugs(sala_id);
@@ -94,7 +120,11 @@ async function incrementPlayerTorn(sala_id) {
 }
 
 
-
+/**
+ * Return the global status of the map.
+ * @param {*} sala_id 
+ * @returns 
+ */
 async function getGlobalStateSala(sala_id) {
 
     let players = await managerDB.getInfoPlayersSalaUltimateNoBugs(sala_id);
@@ -108,5 +138,71 @@ async function getGlobalStateSala(sala_id) {
     return obj_response;
 
 }
+
+
+
+async function checkIfCanDeploy(player_id, country, sala_id){
+
+    let count_pais = await matchDB.countCountrysWithTrops(sala_id);
+
+    
+    
+    if(count_pais == 41){ //41 El numero de paises
+        //check if the player has the country and add the trope
+    }else{
+        //check if is an empty country!!!
+
+
+
+
+        
+    }
+
+
+
+
+
+}
+        
+
+/**
+ * Fase deploy must to be sala status 2
+ * @param {*} data 
+ * @param {*} sendToClient 
+ */
+
+async function faseDeploy(data, sendToClient) {
+    let sala_id = data.info.sala;
+    let sala = await managerDB.getSalaById(sala_id);
+    let token = data.token;
+    //Checks necessaris que es abans de començar cada fase
+    let valid_state = await checkSalaStateIsAtThePhase(null, sala, 2);
+    let valid_user = await checkValidUserTorn(token, sala_id, sala);
+
+    if(valid_state && valid_user){
+        let player = await matchDB.getPLayerByUserId(sala.torn_player_id, sala_id);
+        
+
+
+        let can_deploy = await checkIfCanDeploy(player.id, data.info.country, sala_id);
+
+        console.log("CAN DEPLOY? ", can_deploy);
+        if(can_deploy){
+            await matchDB.InsertUpdateOkupaCountry(player.id, data.info.country, 1);
+            //Incrementar el turno del player
+            await incrementPlayerTorn(sala_id);
+        }
+
+        //Recojer el estado global de la sala para enviar
+        let status_sala = await getGlobalStateSala(sala_id);
+        console.log("STATUS SALA: ",status_sala);
+        sendStatusGlobalSala('deploy', sala_id, sendToClient, { setup: status_sala });
+
+    }
+
+}
+
+
+
 
 module.exports = { startMatch, faseDeploy };

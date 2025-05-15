@@ -75,6 +75,11 @@ const  insertUserToken = async (user_id, token, clientId) => {
 	}
 }
 
+/**
+ * If is not a valid token returns null
+ * @param {*} token 
+ * @returns the session or null
+ */
 const getSessionByToken = async (token) => {
 	try {
 		const [rows] = await db.query('SELECT * FROM session WHERE token = ?', [token]);
@@ -280,6 +285,26 @@ const getInfoPlayersSalaUltimateNoBugs = async (sala_id) => {
 	}
 }
 
+/**
+ * Get the player info by userId
+ * @param {*} sala_id 
+ * @returns 
+ */
+const getInfoPlayerSalaByUserId = async (user_id, sala_id) => {
+	try {
+		const [rows] = await db.query(`SELECT * FROM jugador j WHERE skfPartida_id = ?, skfUser_id = ? `, [sala_id, user_id]);
+		
+		if (rows.length > 0) {
+			return rows;
+		} else {
+			return [];
+		}
+
+	} catch (err) {
+		console.error('❌ Error getInfoPlayersSalaUltimateNoBugs!', err.message);
+	}
+}
+
 
 const getSessionByUid = async (uid) => {
 	try {
@@ -354,5 +379,6 @@ module.exports = {
 	getSessionByUserId,
 	updateSalaAdmin,
 	deleteSala,
-	getInfoPlayersSalaUltimateNoBugs
+	getInfoPlayersSalaUltimateNoBugs,
+	getInfoPlayerSalaByUserId
 };
