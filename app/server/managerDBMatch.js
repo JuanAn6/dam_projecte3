@@ -81,6 +81,24 @@ const getPLayerByUserId = async (user_id, sala_id) => {
 	}
 }
 
+/**
+ * Set the trops to the user!
+ * @param {*} player_id 
+ * @param {*} tropes 
+ * @returns 
+ */
+
+const SetTropesPlayerByPlayerId = async(player_id, tropes ) =>{
+	try {
+		const [rows] = await db.query(`UPDAET jugador SET tropes = ? WHERE id = ? `, [player_id, tropes] );
+		
+		return (rows.affectedRows > 0);
+
+	} catch (err) {
+		console.error('❌ Error SetTropesPlayerByPlayerId!', err.message);
+	}
+}
+
 
 //DEPLOY
 
@@ -141,32 +159,87 @@ const countCountrysWithTrops = async (sala_id) =>{
 		let players = await managerDB.getInfoPlayersSalaUltimateNoBugs(sala_id);
 
 		let ids = players.map((p) => { return p.id });
-		console.log("IDS", ids);
-		
+
 		// let pais = await getPaisByAbr(country); 
 		// if(pais == null) return null;
 
 		let placeholders = ids.map(() => '?').join(', ');
 		
-		console.log("PLACEHOLDERS: ", placeholders);
-
 		let sql = `SELECT count(player_id) as "count" FROM okupa WHERE player_id IN (${placeholders}) and tropes > 0 `;
-		console.log("CONSULTA SQL!!!!", sql, );
 		const [rows] = await db.query(sql, [...ids] );
 		if (rows.length > 0) {
-			console.log("COUNT PAIS: ", rows[0].count);
+			
 			return rows[0].count;
 		} else {
 			return -1;
 		}
 
 	} catch (err) {
-		console.error('❌ Error getCanDeployAt!', err.message);
+		console.error('❌ Error countCountrysWithTrops!', err.message);
 	}
 }
 
 
 /**
+ * Numero de tropes en un pais
+ * @param {*} sala_id 
+ * @param {*} country 
+ * @return {Boolean} Numero de tropes del pais
+ */
+const checkCountryEmpty = async (sala_id, country) =>{
+	try {
+		let players = await managerDB.getInfoPlayersSalaUltimateNoBugs(sala_id);
+
+		let ids = players.map((p) => { return p.id });
+
+		let pais = await getPaisByAbr(country); 
+		if(pais == null) return null;
+
+		let placeholders = ids.map(() => '?').join(', ');
+		
+		let sql = `SELECT tropes as "tropes" FROM okupa WHERE player_id IN (${placeholders}) and pais_id = ? `;
+		const [rows] = await db.query(sql, [...ids, pais.id] );
+		if (rows.length > 0) {
+			return rows[0].tropes;
+		} else {
+			return 0;
+		}
+
+	} catch (err) {
+		console.error('❌ Error checkCountryEmpty!', err.message);
+	}
+}
+
+
+/**
+ * Return true it is the owner and false if is not
+ * @param {*} player_id 
+ * @param {*} country  
+ * @return {Boolean} true it is the owner and false if is not
+ */
+const checkCountryOwner = async (player_id, country) =>{
+	try {
+		let pais = await getPaisByAbr(country); 
+		if(pais == null) return null;
+
+		let sql = `SELECT count(*) as count FROM okupa WHERE player_id = ? and pais_id = ? `;
+		const [rows] = await db.query(sql, [player_id, pais.id] );
+
+		if (rows.length > 0) {
+			return rows[0].count > 0;
+		} else {
+			return false;
+		}
+
+	} catch (err) {
+		console.error('❌ Error checkCountryEmpty!', err.message);
+	}
+}
+
+
+
+/**
+ * NOT USED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  * Check if the player can deploy a troop
  * @param {*} player_id 
  * @param {*} country 
@@ -210,5 +283,8 @@ module.exports = {
 	getCountrysFromPlayer,
 	getPLayerByUserId,
 	getCanDeployAt,
-	countCountrysWithTrops
+	countCountrysWithTrops,
+	SetTropesPlayerByPlayerId,
+	checkCountryEmpty,
+	checkCountryOwner
 };

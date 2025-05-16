@@ -24,6 +24,10 @@ async function startMatch(data , sendToClient) {
         if(players.length > 0 ){
             await matchDB.updateSalaPlayerTorn(sala_id, players[0].id);
             sala = await managerDB.getSalaById(sala_id);
+            
+            for(let i = 0 ; i < players.length; i++){
+                await matchDB.SetTropesPlayerByPlayerId(players[i].id, 35);
+            }
         }
 
         for(let i = 0 ; i < players.length; i++){
@@ -139,28 +143,30 @@ async function getGlobalStateSala(sala_id) {
 
 }
 
-
+/**
+ * Check if the player can "deploy" a trope in the country, depends if all countries are fill with at least one trope or is empty.
+ * If all the countries are filled if is the owner of the country.
+ * @param {*} player_id 
+ * @param {*} country 
+ * @param {*} sala_id 
+ * @returns {Boolean}
+ */
 
 async function checkIfCanDeploy(player_id, country, sala_id){
 
     let count_pais = await matchDB.countCountrysWithTrops(sala_id);
-
-    
-    
-    if(count_pais == 41){ //41 El numero de paises
+    console.log("COUNT DE PAIS: ", count_pais);
+    if(count_pais >= 41){ //41 El numero de paises
         //check if the player has the country and add the trope
+        let own = await matchDB.checkCountryOwner(player_id, country);
+        console.log("OWN OF COUNTRY: ", own);
+        return own;
     }else{
         //check if is an empty country!!!
-
-
-
-
-        
+        let empty = await matchDB.checkCountryEmpty(sala_id, country);
+        console.log("EMPTY: ", empty);
+        return empty == 0;
     }
-
-
-
-
 
 }
         
@@ -182,15 +188,30 @@ async function faseDeploy(data, sendToClient) {
     if(valid_state && valid_user){
         let player = await matchDB.getPLayerByUserId(sala.torn_player_id, sala_id);
         
+        if(player.tropes > 0){
+            let can_deploy = await checkIfCanDeploy(player.id, data.info.country, sala_id);
+            
+            console.log("CAN DEPLOY? ", can_deploy);
+            if(can_deploy){
+                await matchDB.InsertUpdateOkupaCountry(player.id, data.info.country, 1);
+                //Incrementar el turno del player
+                await incrementPlayerTorn(sala_id);
+            }
 
+        }else{
+    
+            //Check the troops of the players to switch to the new stage of the match!
+            let players = await managerDB.getPlayersInfoFromSala(sala_id);
+            if(players.every((p) => p.tropes == 0)){
+                //Status 3 first combat!!!
+                await matchDB.updateSalaStatusTorn(sala_id, 2);
+                //Incrementar el turno del player
+                await incrementPlayerTorn(sala_id);
+            }else{
+                //Incrementar el turno del player
+                await incrementPlayerTorn(sala_id);
+            }
 
-        let can_deploy = await checkIfCanDeploy(player.id, data.info.country, sala_id);
-
-        console.log("CAN DEPLOY? ", can_deploy);
-        if(can_deploy){
-            await matchDB.InsertUpdateOkupaCountry(player.id, data.info.country, 1);
-            //Incrementar el turno del player
-            await incrementPlayerTorn(sala_id);
         }
 
         //Recojer el estado global de la sala para enviar
@@ -199,6 +220,7 @@ async function faseDeploy(data, sendToClient) {
         sendStatusGlobalSala('deploy', sala_id, sendToClient, { setup: status_sala });
 
     }
+
 
 }
 
