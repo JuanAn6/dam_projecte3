@@ -102,11 +102,12 @@ const SetTropesPlayerByPlayerId = async(player_id, tropes ) =>{
 //DEPLOY
 
 /**
- * RETURN NULL IS ERROR
+ * This function sum the troops to the country, 
+ * 	if the country has 10 and yo pass +1 becomes 11, if the country has 10 and you pass -2 becomes 8
  * @param {*} player_id 
  * @param {*} country 
  * @param {*} trops 
- * @returns 
+ * @returns RETURN NULL IS ERROR
  */
 
 const InsertUpdateOkupaCountry = async (player_id, country, trops) => {

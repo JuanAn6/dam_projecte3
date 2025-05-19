@@ -278,15 +278,26 @@ async function faseDeployCombat(data, sendToClient){
 
     if(valid_state && valid_user){
         //Check if the player can place the sum of the number of troops, if cant place dont place and change to another player torn
+        let session = await managerDB.getSessionByToken(token);
+        let player = await matchDB.getPLayerByUserId(session.usuari_id);
+        let troops = await matchDB.getPlayerTroops(player.id);
+        let sum_troops = data.info.deploy.reduce((acum, d) => acum + d.troops, 0);
+        console.log("TOTAL DE TROPES PER INSERTAR: ", sum_troops);
+        
+        if(troops >= sum_troops){
 
-    
+            //Change the countrys, only if the check is valid!
+            for(let i = 0; i < data.info.deploy.length ; i++){
+                
+                await matchDB.InsertUpdateOkupaCountry(player.id, data.info.deploy[i].country, data.info.deploy[i].troops);
+            }
+            
+        }
+
         //Update player troops to 0
 
 
-        //Change the countrys, only if the check is valid!
-
-
-        //Change the new attack_phase
+        
 
 
         //Send the new status to everyone
@@ -363,6 +374,24 @@ async function faseMoveTroopsCombat(data, sendToClient){
 
     if(valid_state && valid_user){
 
+        //Check if the owner is the player
+
+
+
+        //Check if has enough toops in the country
+
+
+        //Check if the destination is the owner
+
+
+        //Check if the countris has a path to go
+
+
+        //Move everything
+
+
+        //Change to the reinforce state
+
 
     }
 
@@ -388,6 +417,8 @@ async function faseReinforceCombat(data, sendToClient){
 
     if(valid_state && valid_user){
 
+        
+
 
 
         //Change the player torn and calculate the new troops can place this one
@@ -400,6 +431,20 @@ async function faseReinforceCombat(data, sendToClient){
 
 }
 
+
+/**
+ * Change the internal phase of attacking turn
+ * parece que solo lo necesitaremos en la fase de ataque para que todos los usuarios vean que esta pasando y saber cuando el usaurio quiere cambiar
+ * 
+ */
+
+async function chagenFaseCombat(data, sendToClient)){
+
+    //Check if is the player 
+
+    //Change the phase
+    
+}
 
 
 
@@ -414,4 +459,4 @@ async function faseReinforceCombat(data, sendToClient){
 
 
 
-module.exports = { startMatch, faseDeploy, faseDeployCombat, faseAttackCombat, faseReinforceCombat, faseMoveTroopsCombat };
+module.exports = { startMatch, faseDeploy, faseDeployCombat, faseAttackCombat, faseReinforceCombat, faseMoveTroopsCombat, chagenFaseCombat };
