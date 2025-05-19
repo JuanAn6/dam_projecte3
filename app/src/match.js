@@ -259,6 +259,8 @@ async function numberOfTroopsDeployCombat(sala_id){
 
 
 /**
+ * FASE 3
+ * 
  * Fase deploy new troops!
  * If the player didnt send at the same time all the troops he can place they are gona be discard!
  * @param {*} data 
@@ -266,53 +268,142 @@ async function numberOfTroopsDeployCombat(sala_id){
  */
 async function faseDeployCombat(data, sendToClient){
 
-    //Check if the player can place the sum of the number of troops, if cant place dont place and change to another player torn
+    let sala_id = data.info.sala;
+    let sala = await managerDB.getSalaById(sala_id);
+    let token = data.token;
+
+    //Checks necessaris que es abans de començar cada fase
+    let valid_state = await checkSalaStateIsAtThePhase(null, sala, 2);
+    let valid_user = await checkValidUserTorn(token, sala_id, sala);
+
+    if(valid_state && valid_user){
+        //Check if the player can place the sum of the number of troops, if cant place dont place and change to another player torn
 
     
-    //Update player troops to 0
+        //Update player troops to 0
 
 
-    //Change the countrys, only if the check is valid!
+        //Change the countrys, only if the check is valid!
 
 
-    //Change the new attack_phase
+        //Change the new attack_phase
 
 
-    //Send the new status to everyone
+        //Send the new status to everyone
 
+    }
+
+    
 
 }
 
 
 
 /**
+ * FASE 4
+ * 
  * Fase attack 
  * @param {*} data 
  * @param {*} sendToClient 
  */
 async function faseAttackCombat(data, sendToClient){
 
-    
+    //Check player is vaid
+    let sala_id = data.info.sala;
+    let sala = await managerDB.getSalaById(sala_id);
+    let token = data.token;
 
+    //Checks necessaris que es abans de començar cada fase
+    let valid_state = await checkSalaStateIsAtThePhase(null, sala, 2);
+    let valid_user = await checkValidUserTorn(token, sala_id, sala);
+
+    if(valid_state && valid_user){
+        
+        
+        //Cehck if is the owner of the country!
+
+
+        //Check if the countrys are neightbours and can attack
+
+
+        //Generate the roll of the dice
+
+        
+        //Change all the countrys
+
+
+        //Check if game finish!
+
+
+        //Send it
+
+
+        //Change the state of match
+
+
+    }
+    
 }
 
 /**
+ * FASE 5
+ * 
+ * Fase move troops 
+ * @param {*} data 
+ * @param {*} sendToClient 
+ */
+async function faseMoveTroopsCombat(data, sendToClient){
+    let sala_id = data.info.sala;
+    let sala = await managerDB.getSalaById(sala_id);
+    let token = data.token;
+
+    //Checks necessaris que es abans de començar cada fase
+    let valid_state = await checkSalaStateIsAtThePhase(null, sala, 2);
+    let valid_user = await checkValidUserTorn(token, sala_id, sala);
+
+    if(valid_state && valid_user){
+
+
+    }
+
+}
+
+
+
+/**
+ * FASE 6
+ * 
  * Fase reinforce 
  * @param {*} data 
  * @param {*} sendToClient 
  */
 async function faseReinforceCombat(data, sendToClient){
+    let sala_id = data.info.sala;
+    let sala = await managerDB.getSalaById(sala_id);
+    let token = data.token;
+
+    //Checks necessaris que es abans de començar cada fase
+    let valid_state = await checkSalaStateIsAtThePhase(null, sala, 2);
+    let valid_user = await checkValidUserTorn(token, sala_id, sala);
+
+    if(valid_state && valid_user){
 
 
 
+        //Change the player torn and calculate the new troops can place this one
 
-    //Change the player torn and calculate the new troops can place this one
+        
+
+    }
+
+
 
 }
 
 
 
 
+//FASE 7 game finish!
 
 
 
@@ -323,5 +414,4 @@ async function faseReinforceCombat(data, sendToClient){
 
 
 
-
-module.exports = { startMatch, faseDeploy, faseDeployCombat, faseAttackCombat, faseReinforceCombat };
+module.exports = { startMatch, faseDeploy, faseDeployCombat, faseAttackCombat, faseReinforceCombat, faseMoveTroopsCombat };
