@@ -17,12 +17,12 @@ async function startMatch(data , sendToClient) {
         return { status : 4000, response : false, message: "Error: User does not have permission to start the match"};
     }
 
-    managerDB.getPlayersInfoFromSala(sala_id).then( async (players) => {
+    managerDB.getInfoPlayersSalaUltimateNoBugs(sala_id).then( async (players) => {
         //Status 2 col·locacio inicial!
         await matchDB.updateSalaStatusTorn(sala_id, 2);
         let sala;        
         if(players.length > 0 ){
-            await matchDB.updateSalaPlayerTorn(sala_id, players[0].id);
+            await matchDB.updateSalaPlayerTorn(sala_id, players[0].skfUser_id);
             sala = await managerDB.getSalaById(sala_id);
             
             for(let i = 0 ; i < players.length; i++){
@@ -31,7 +31,7 @@ async function startMatch(data , sendToClient) {
         }
 
         for(let i = 0 ; i < players.length; i++){
-            let session = await managerDB.getSessionByUserId(players[i].id);
+            let session = await managerDB.getSessionByUserId(players[i].skfUser_id);
             if(session != null){
                 sendToClient(session.uid, {action: 'start_match', response: {start: 1, sala: sala}});
             }
@@ -155,16 +155,13 @@ async function getGlobalStateSala(sala_id) {
 async function checkIfCanDeploy(player_id, country, sala_id){
 
     let count_pais = await matchDB.countCountrysWithTrops(sala_id);
-    console.log("COUNT DE PAIS: ", count_pais);
-    if(count_pais >= 41){ //41 El numero de paises
+    if(count_pais > 41){ //41 El numero de paises
         //check if the player has the country and add the trope
         let own = await matchDB.checkCountryOwner(player_id, country);
-        console.log("OWN OF COUNTRY: ", own);
         return own;
     }else{
         //check if is an empty country!!!
         let empty = await matchDB.checkCountryEmpty(sala_id, country);
-        console.log("EMPTY: ", empty);
         return empty == 0;
     }
 
@@ -191,9 +188,9 @@ async function faseDeploy(data, sendToClient) {
         if(player.tropes > 0){
             let can_deploy = await checkIfCanDeploy(player.id, data.info.country, sala_id);
             
-            console.log("CAN DEPLOY? ", can_deploy);
             if(can_deploy){
                 await matchDB.InsertUpdateOkupaCountry(player.id, data.info.country, 1);
+                await matchDB.SetTropesPlayerByPlayerId(player.id, player.tropes-1 );
                 //Incrementar el turno del player
                 await incrementPlayerTorn(sala_id);
             }
@@ -204,9 +201,19 @@ async function faseDeploy(data, sendToClient) {
             let players = await managerDB.getPlayersInfoFromSala(sala_id);
             if(players.every((p) => p.tropes == 0)){
                 //Status 3 first combat!!!
-                await matchDB.updateSalaStatusTorn(sala_id, 2);
+                await matchDB.updateSalaStatusTorn(sala_id, 3);
                 //Incrementar el turno del player
                 await incrementPlayerTorn(sala_id);
+
+                //Recojer el estado global de la sala para enviar
+                let status_sala = await getGlobalStateSala(sala_id);
+                
+                //Calculate the number of trops is for the player
+                let troops = await numberOfTroopsDeployCombat(sala_id);
+                console.log("CHANGE ATTACK PHASE!");
+                sendStatusGlobalSala('deploy_combat', sala_id, sendToClient, { n_tropes: troops, setup: status_sala});
+                return;
+
             }else{
                 //Incrementar el turno del player
                 await incrementPlayerTorn(sala_id);
@@ -226,5 +233,95 @@ async function faseDeploy(data, sendToClient) {
 
 
 
+//FASE ATTACK
 
-module.exports = { startMatch, faseDeploy };
+/**
+ * Return the number of troops of the active player can place in the map
+ *  (count of troops / 3) trunc
+ * @param sala_id {*}
+ * @return {number}
+ */
+async function numberOfTroopsDeployCombat(sala_id){
+    let sala = await matchDB.getSalaById(sala_id);
+    let players = await managerDB.getPlayersInfoFromSala(sala_id);
+    let player = players.find((p) => p.skfUser_id == sala.torn_player_id );
+
+    let troops = await matchDB.getPlayerTroops(player.id);
+    troops = Math.floor(troops / 3);
+    console.log("TROPES DEL PLAYER: ", troops);
+    
+    //Update the number of troops the player can place, to after can check it
+    await matchDB.SetTropesPlayerByPlayerId(player.id, troops);
+
+    return troops;
+
+}
+
+
+/**
+ * Fase deploy new troops!
+ * If the player didnt send at the same time all the troops he can place they are gona be discard!
+ * @param {*} data 
+ * @param {*} sendToClient 
+ */
+async function faseDeployCombat(data, sendToClient){
+
+    //Check if the player can place the sum of the number of troops, if cant place dont place and change to another player torn
+
+    
+    //Update player troops to 0
+
+
+    //Change the countrys, only if the check is valid!
+
+
+    //Change the new attack_phase
+
+
+    //Send the new status to everyone
+
+
+}
+
+
+
+/**
+ * Fase attack 
+ * @param {*} data 
+ * @param {*} sendToClient 
+ */
+async function faseAttackCombat(data, sendToClient){
+
+    
+
+}
+
+/**
+ * Fase reinforce 
+ * @param {*} data 
+ * @param {*} sendToClient 
+ */
+async function faseReinforceCombat(data, sendToClient){
+
+
+
+
+    //Change the player torn and calculate the new troops can place this one
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+module.exports = { startMatch, faseDeploy, faseDeployCombat, faseAttackCombat, faseReinforceCombat };

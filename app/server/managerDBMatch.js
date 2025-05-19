@@ -55,7 +55,6 @@ const getCountrysFromPlayer = async (player_id) => {
 			`, [player_id] );
 
 		if (rows.length > 0) {
-			console.log("ASDSADSADSADSADAS: ", rows);
 			return rows;
 		} else {
 			return null;
@@ -90,7 +89,7 @@ const getPLayerByUserId = async (user_id, sala_id) => {
 
 const SetTropesPlayerByPlayerId = async(player_id, tropes ) =>{
 	try {
-		const [rows] = await db.query(`UPDAET jugador SET tropes = ? WHERE id = ? `, [player_id, tropes] );
+		const [rows] = await db.query(`UPDATE jugador SET tropes = ? WHERE id = ? `, [tropes, player_id] );
 		
 		return (rows.affectedRows > 0);
 
@@ -236,6 +235,30 @@ const checkCountryOwner = async (player_id, country) =>{
 	}
 }
 
+/**
+ * Return the number of troops of player
+ * @param {*} player_id 
+ * @param {*} country  
+ * @return {number}
+ */
+const getPlayerTroops = async (player_id) =>{
+	try {
+		let pais = await getPaisByAbr(country); 
+		if(pais == null) return null;
+
+		let sql = `SELECT sum(tropes) as sum FROM okupa WHERE player_id = ?`;
+		const [rows] = await db.query(sql, [player_id] );
+
+		if (rows.length > 0) {
+			return rows[0].sum;
+		} else {
+			return false;
+		}
+
+	} catch (err) {
+		console.error('❌ Error checkCountryEmpty!', err.message);
+	}
+}
 
 
 /**
@@ -250,16 +273,13 @@ const getCanDeployAt = async (player_id, country, sala_id) =>{
 	try {
 		let players = await managerDB.getInfoPlayersSalaUltimateNoBugs(sala_id);
 		let ids = players.map((p) => { return p.id });
-		console.log("IDS", ids);
 		let pais = await getPaisByAbr(country); 
 		if(pais == null) return null;
 
 		let placeholders = ids.map(() => '?').join(', ');
-		
-		console.log("PLACEHOLDERS: ", placeholders);
 
 		let sql = `SELECT * FROM okupa WHERE player_id IN (${placeholders}) and player_id != ? and  pais_id = ? `;
-		console.log("CONSULTA SQL!!!!", sql, );
+
 		const [rows] = await db.query(sql, [...ids, player_id, pais.id] );
 
 		if (rows.length > 0) {
@@ -286,5 +306,6 @@ module.exports = {
 	countCountrysWithTrops,
 	SetTropesPlayerByPlayerId,
 	checkCountryEmpty,
-	checkCountryOwner
+	checkCountryOwner,
+	getPlayerTroops
 };

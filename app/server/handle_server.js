@@ -36,6 +36,18 @@ const handleAction = async(data, sendToClient) => {
             await MATCH.faseDeploy(data, sendToClient);
             return null;
 
+        case 'deploy_combat':
+            await MATCH.faseDeployCombat(data, sendToClient);
+            return null;
+
+        case 'deploy_combat':
+            await MATCH.faseAttackCombat(data, sendToClient);
+            return null;
+        
+        case 'reinforce_combat':
+            await MATCH.faseReinforceCombat(data, sendToClient);
+            return null;
+
 
             
         //GLOBAL
