@@ -288,19 +288,24 @@ async function faseDeployCombat(data, sendToClient){
 
             //Change the countrys, only if the check is valid!
             for(let i = 0; i < data.info.deploy.length ; i++){
-                
-                await matchDB.InsertUpdateOkupaCountry(player.id, data.info.deploy[i].country, data.info.deploy[i].troops);
+                let own = await matchDB.checkCountryOwner(player.id, country);
+                if(own){
+                    await matchDB.InsertUpdateOkupaCountry(player.id, data.info.deploy[i].country, data.info.deploy[i].troops);
+                }
             }
-            
+
         }
-
-        //Update player troops to 0
-
-
         
+        //Update player troops to 0
+        await matchDB.SetTropesPlayerByPlayerId(player.id, 0);
 
+        //Change to the new mig phase
+        await matchDB.updateSalaStatusTorn(sala_id, 4);
 
         //Send the new status to everyone
+        let status_sala = await getGlobalStateSala(sala_id);
+        console.log("STATUS SALA: ",status_sala);
+        sendStatusGlobalSala('attack', sala_id, sendToClient, { setup: status_sala });
 
     }
 
@@ -308,6 +313,42 @@ async function faseDeployCombat(data, sendToClient){
 
 }
 
+
+/**
+ * Generate the random dice in base a the tpe of the country and the troops
+ * 
+ *  atacante: 
+ *  tropas - dados
+ *  2 - 1;
+ *  3 - 2;
+ *  4 o mas - 3;
+ * 
+ *  defensor:
+ *  tropas - dados 
+ *  1 - 1;
+ *  2 o mas - 2;
+ *                 
+ * @param {int} troops
+ * @param {string} type type of the country, "defender", "attacker"
+ * @return array of ints
+ */
+function generateRandomDice(troops, type){
+
+    let max = 0;
+    if(type == "attacker"){
+        max = troops <= 3 && troops > 0 ? troops : 1;
+    }else if(type == "defender"){
+        max = troops <= 2 && troops > 0 ? troops : 1;
+    }
+
+    let nums = [];
+    for(let i = 0; i < max; i++){
+        let randomInt = Math.floor(Math.random() * 6) + 1;
+        nums.push(randomInt);
+    }
+    
+    return nums;
+}
 
 
 /**
@@ -329,41 +370,109 @@ async function faseAttackCombat(data, sendToClient){
     let valid_user = await checkValidUserTorn(token, sala_id, sala);
 
     if(valid_state && valid_user){
-        
-        
+        let attaker = data.info.attaker;
+        let defender = data.info.attaker;
+        let troops = data.info.troops;
+        let next_fase = false;
+
+        if(attaker == undefined || defender == undefined || troops == undefined){
+            return;
+        }
+
         //Cehck if is the owner of the country!
+        let attaker_own = await matchDB.checkCountryOwner(player.id, attaker);
+        let defender_own = await matchDB.checkCountryOwner(player.id, defender);
+
+        if(attaker_own && !defender_own){
+            //Check if the countrys are neighbours and can attack
+
+            let neighbours = matchDB.checkIfTheyAreNeighbours(attaker, defender);
+            if(neighbours){
+                //Generate the roll of the dice
+
+                let pais_attaker = matchDB.getPaisByAbr(attaker);
+                
+                if(pais_attaker.tropes > troops){
+                    let pais_defender = matchDB.getPaisByAbr(defender);
+                    
+                   
+                    let attacker_dice = generateRandomDice(troops, 'attacker');
+                    let defender_dice = generateRandomDice(pais_defender.tropes, 'defender');
 
 
-        //Check if the countrys are neightbours and can attack
+                    /*
+                        Se restan tropas en funcion de quien gana y quien pierde por los dados, 
+                        Si el atacante ataca con 3 dados se queda con los dos mas altos y el defensor con los suyos
+                        Entonces se comparan por orden los mas alto con los mas altos,
+                        En caso de empate los dos pierden una tropa,
+                        En caso de perder solo pierde una tropa el que pierde,
+                        Se hace por cada dado jugado (max 2)
+                        Ej:
+                            3 - 3
+                            2 - 1
+                        El defensor pierde 2 y el atacante 1
+                            
+                            4 - 5
+                            2 - 3
+                            1
+                        El atacante pierde 2 tropas y el defensor ninguna
+                        ...
+                    */
+
+                    
 
 
-        //Generate the roll of the dice
+                    next_fase = true;
+                    //Change all the countrys
+                
 
+                
+                }
+            }
+        }
         
-        //Change all the countrys
+        if(next_fase){
+            //Check if game finish!
 
-
-        //Check if game finish!
+        }
 
 
         //Send it
+        /*
+            attacker:{
+                country:JP
+                dice:{n,n,n}
+                troops:N,
+                player_id: id
+                },
+            defender:{
+                country:UA, 
+                dice_defender:{n,n}
+                troops:N,
+                player_id: id
+                },
+        */
 
-
-        //Change the state of match
-
+        let fase = next_fase ? 'reinforce' : 'attack';
+        //Send the new status to everyone
+        let status_sala = await getGlobalStateSala(sala_id);
+        console.log("STATUS SALA: ",status_sala);
+        sendStatusGlobalSala(fase, sala_id, sendToClient, { setup: status_sala });
 
     }
     
 }
 
+
+
 /**
  * FASE 5
  * 
- * Fase move troops 
+ * Fase reinforce 
  * @param {*} data 
  * @param {*} sendToClient 
  */
-async function faseMoveTroopsCombat(data, sendToClient){
+async function faseReinforceCombat(data, sendToClient){
     let sala_id = data.info.sala;
     let sala = await managerDB.getSalaById(sala_id);
     let token = data.token;
@@ -390,37 +499,6 @@ async function faseMoveTroopsCombat(data, sendToClient){
         //Move everything
 
 
-        //Change to the reinforce state
-
-
-    }
-
-}
-
-
-
-/**
- * FASE 6
- * 
- * Fase reinforce 
- * @param {*} data 
- * @param {*} sendToClient 
- */
-async function faseReinforceCombat(data, sendToClient){
-    let sala_id = data.info.sala;
-    let sala = await managerDB.getSalaById(sala_id);
-    let token = data.token;
-
-    //Checks necessaris que es abans de començar cada fase
-    let valid_state = await checkSalaStateIsAtThePhase(null, sala, 2);
-    let valid_user = await checkValidUserTorn(token, sala_id, sala);
-
-    if(valid_state && valid_user){
-
-        
-
-
-
         //Change the player torn and calculate the new troops can place this one
 
         
@@ -438,7 +516,7 @@ async function faseReinforceCombat(data, sendToClient){
  * 
  */
 
-async function chagenFaseCombat(data, sendToClient)){
+async function chagenFaseCombat(data, sendToClient){
 
     //Check if is the player 
 
@@ -459,4 +537,4 @@ async function chagenFaseCombat(data, sendToClient)){
 
 
 
-module.exports = { startMatch, faseDeploy, faseDeployCombat, faseAttackCombat, faseReinforceCombat, faseMoveTroopsCombat, chagenFaseCombat };
+module.exports = { startMatch, faseDeploy, faseDeployCombat, faseAttackCombat, faseReinforceCombat, chagenFaseCombat };

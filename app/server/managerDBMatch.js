@@ -183,7 +183,7 @@ const countCountrysWithTrops = async (sala_id) =>{
 /**
  * Numero de tropes en un pais
  * @param {*} sala_id 
- * @param {*} country 
+ * @param {*} country abr
  * @return {Boolean} Numero de tropes del pais
  */
 const checkCountryEmpty = async (sala_id, country) =>{
@@ -214,7 +214,7 @@ const checkCountryEmpty = async (sala_id, country) =>{
 /**
  * Return true it is the owner and false if is not
  * @param {*} player_id 
- * @param {*} country  
+ * @param {*} country  abr ex: (GB, AL, ...)
  * @return {Boolean} true it is the owner and false if is not
  */
 const checkCountryOwner = async (player_id, country) =>{
@@ -235,6 +235,7 @@ const checkCountryOwner = async (player_id, country) =>{
 		console.error('❌ Error checkCountryEmpty!', err.message);
 	}
 }
+
 
 /**
  * Return the number of troops of player
@@ -294,8 +295,34 @@ const getCanDeployAt = async (player_id, country, sala_id) =>{
 	}
 }
 
+/**
+ * Check if the contrys are neighbours
+ * 
+ * @param {*} country1 abr
+ * @param {*} country2 abr
+ * @return {Boolean} 
+ */
+const checkIfTheyAreNeighbours = async (country1, country2) =>{
+	try {
+		
+		let pais1 = await getPaisByAbr(country1); 
+		let pais2 = await getPaisByAbr(country2);
+		if(pais1 == null || pais2 == null) return false;
+		
+		let sql = `SELECT count(*) as "count" FROM frontera WHERE pais1_id = ? AND pais2_id = ?`;
 
+		const [rows] = await db.query(sql, [pais1.id, pais2.id] );
 
+		if (rows.length > 0) {
+			return rows[0].count > 0;
+		} else {
+			return false;
+		}
+
+	} catch (err) {
+		console.error('❌ Error checkIfTheyAreNeighbours!', err.message);
+	}
+}
 
 module.exports = { 
 	updateSalaStatusTorn,
@@ -308,5 +335,7 @@ module.exports = {
 	SetTropesPlayerByPlayerId,
 	checkCountryEmpty,
 	checkCountryOwner,
-	getPlayerTroops
+	getPlayerTroops,
+	getPaisByAbr,
+	checkIfTheyAreNeighbours,
 };
