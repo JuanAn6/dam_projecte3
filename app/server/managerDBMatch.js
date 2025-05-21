@@ -324,6 +324,38 @@ const checkIfTheyAreNeighbours = async (country1, country2) =>{
 	}
 }
 
+
+/**
+ * Change the player by the new owner and the troops of the country.
+ * @param {*} country_id 
+ * @param {*} player_id if new player is null the player is not changed
+ * @param {*} old_player_id 
+ * @param {*} troops 
+ * @returns 
+ */
+
+const updatePaisPlayerAndTroops = async (country_id, player_id = null, old_player_id, troops) =>{
+	try {
+		let rows;
+		if(player_id == null){
+			let sql = `UPDATE okupa SET tropes = ? WHERE player_id = ? and pais_id = ?`;
+			[rows] = await db.query(sql, [troops, old_player_id, country_id] );
+		}else{
+			let sql = `UPDATE okupa SET tropes = ?, player_id = ? WHERE player_id = ? and pais_id = ?`;
+			[rows] = await db.query(sql, [troops, player_id, old_player_id, country_id] );
+		}
+		
+		if (rows.affectedRows > 0) {
+			return 1;
+		} else {
+			return null;
+		}
+	} catch (err) {
+		console.error('❌ Error updatePaisPlayerAndTroops!', err.message);
+	}
+
+}
+
 module.exports = { 
 	updateSalaStatusTorn,
 	updateSalaPlayerTorn,
@@ -338,4 +370,5 @@ module.exports = {
 	getPlayerTroops,
 	getPaisByAbr,
 	checkIfTheyAreNeighbours,
+	updatePaisPlayerAndTroops,
 };

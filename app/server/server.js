@@ -11,7 +11,11 @@ const wss = new WebSocket.Server({ port: 8080 }, () => {
 const clients = new Map(); // ID -> WebSocket
 
 
-
+/**
+ * Send information to client, 
+ * @param {*} clientId { uid }
+ * @param {*} message 
+ */
 async function sendToClient(clientId, message) {
 	if (typeof message !== 'string') {
 		message = JSON.stringify(message);

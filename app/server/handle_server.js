@@ -47,6 +47,10 @@ const handleAction = async(data, sendToClient) => {
         case 'next_phase':
             await MATCH.chagenFaseCombat(data, sendToClient);
             return null;
+        
+        case 'attack_reinforce':
+            await MATCH.faseMoveCombat(data, sendToClient);
+            return null;
 
         case 'reinforce':
             await MATCH.faseReinforceCombat(data, sendToClient);
