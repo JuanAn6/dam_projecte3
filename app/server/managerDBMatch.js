@@ -105,7 +105,7 @@ const SetTropesPlayerByPlayerId = async(player_id, tropes ) =>{
  * This function sum the troops to the country, 
  * 	if the country has 10 and yo pass +1 becomes 11, if the country has 10 and you pass -2 becomes 8
  * @param {*} player_id 
- * @param {*} country 
+ * @param {*} country (id)
  * @param {*} trops 
  * @returns RETURN NULL IS ERROR
  */
@@ -356,6 +356,36 @@ const updatePaisPlayerAndTroops = async (country_id, player_id = null, old_playe
 
 }
 
+
+/**
+ * Get the country of a game
+ * @param {*} pais_id 
+ * @param {*} sala_id 
+ */
+const getCountryByIdAndSalaId = async (pais_id, sala_id) =>{
+	
+	try {
+		
+		let players = await managerDB.getInfoPlayersSalaUltimateNoBugs(sala_id);
+		let ids = players.map((p) => { return p.id });
+		let placeholders = ids.map(() => '?').join(', ');
+		
+		let sql = `SELECT * FROM okupa WHERE player_id IN (${placeholders}) and country_id = ? `;
+		let	[rows] = await db.query(sql, [...placeholders, pais_id] );
+		
+		if (rows.length > 0) {			
+			return rows[0];
+		} else {
+			return -1;
+		}
+		
+	} catch (err) {
+		console.error('❌ Error updatePaisPlayerAndTroops!', err.message);
+	}
+
+
+}
+
 module.exports = { 
 	updateSalaStatusTorn,
 	updateSalaPlayerTorn,
@@ -371,4 +401,5 @@ module.exports = {
 	getPaisByAbr,
 	checkIfTheyAreNeighbours,
 	updatePaisPlayerAndTroops,
+	getCountryByIdAndSalaId,
 };
