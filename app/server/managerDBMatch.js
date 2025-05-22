@@ -386,6 +386,75 @@ const getCountryByIdAndSalaId = async (pais_id, sala_id) =>{
 
 }
 
+
+
+/**
+ * Devuelve todos los países (abr) que controla un jugador en una sala.
+ * @param {*} player_id 
+ * @param {*} sala_id 
+ * @returns {Promise<string[]>}
+ */
+const getPlayerCountriesInSala = async (player_id, sala_id) => {
+    try {
+        const [rows] = await db.query(
+            `SELECT p.abr FROM okupa o JOIN pais p ON o.pais_id = p.id WHERE o.player_id = ?`,
+            [player_id]
+        );
+        return rows.map(r => r.abr);
+    } catch (err) {
+        console.error('❌ Error getPlayerCountriesInSala!', err.message);
+        return [];
+    }
+};
+
+
+/**
+ * Devuelve los abrev. de los países vecinos de un país.
+ * @param {*} country_abr 
+ * @returns {Promise<string[]>}
+ */
+const getNeighboursOfCountry = async (country_abr) => {
+    try {
+        const pais = await getPaisByAbr(country_abr);
+        if (!pais) return [];
+        const [rows] = await db.query(
+            `SELECT p2.abr FROM frontera f JOIN pais p2 ON f.pais2_id = p2.id WHERE f.pais1_id = ?`,
+            [pais.id]
+        );
+        return rows.map(r => r.abr);
+    } catch (err) {
+        console.error('❌ Error getNeighboursOfCountry!', err.message);
+        return [];
+    }
+};
+
+
+/**
+ * BFS para comprobar si hay camino entre dos países solo por países del jugador.
+ * @param {*} player_id 
+ * @param {*} from_abr 
+ * @param {*} to_abr 
+ * @param {*} sala_id 
+ * @returns {Promise<boolean>}
+ */
+const hasPathBetweenCountries = async (player_id, from_abr, to_abr, sala_id) => {
+    const playerCountries = await getPlayerCountriesInSala(player_id, sala_id);
+    const visited = new Set();
+    const queue = [from_abr];
+    while (queue.length > 0) {
+        const current = queue.shift();
+        if (current === to_abr) return true;
+        visited.add(current);
+        const neighbours = await getNeighboursOfCountry(current);
+        for (const n of neighbours) {
+            if (playerCountries.includes(n) && !visited.has(n)) {
+                queue.push(n);
+            }
+        }
+    }
+    return false;
+};
+
 module.exports = { 
 	updateSalaStatusTorn,
 	updateSalaPlayerTorn,
@@ -402,4 +471,7 @@ module.exports = {
 	checkIfTheyAreNeighbours,
 	updatePaisPlayerAndTroops,
 	getCountryByIdAndSalaId,
+	hasPathBetweenCountries,
+	getPlayerCountriesInSala,
+	getNeighboursOfCountry
 };

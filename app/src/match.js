@@ -642,38 +642,48 @@ async function faseReinforceCombat(data, sendToClient){
     let valid_user = await checkValidUserTorn(token, sala_id, sala);
 
     if(valid_state && valid_user){
+        let session = await managerDB.getSessionByToken(token);
+        let player = await matchDB.getPLayerByUserId(session.usuari_id, sala_id);
 
-        //Check if the owner is the player
+        const from = data.info.from;
+        const to = data.info.to;
+        const troops = data.info.troops;
 
+        // 1. Check if the owner is the player
+        const from_own = await matchDB.checkCountryOwner(player.id, from);
+        const to_own = await matchDB.checkCountryOwner(player.id, to);
 
+        // 2. Check if has enough troops in the country
+        const pais_from = await matchDB.getPaisByAbr(from);
+        const okupa_from = await matchDB.getCountryByIdAndSalaId(pais_from.id, sala_id);
 
-        //Check if has enough toops in the country
+        if (from_own && to_own && okupa_from.tropes > troops && troops > 0) {
+            // 3. Check if the countries has a path to go
+            const pathExists = await matchDB.hasPathBetweenCountries(player.id, from, to, sala_id);
 
+            if (pathExists) {
+                // 4. Move everything
+                await matchDB.InsertUpdateOkupaCountry(player.id, from, -troops);
+                await matchDB.InsertUpdateOkupaCountry(player.id, to, troops);
 
-        //Check if the destination is the owner
+                // 5. Change the player turn and calculate the new troops
+                await incrementPlayerTorn(sala_id);
+                // (Opcional: recalcular tropas si es necesario)
 
-
-        //Check if the countris has a path to go
-
-
-        //Move everything
-
-
-        //Change the player torn and calculate the new troops can place this one
-
-        
-
+                // 6. Enviar estado actualizado
+                let status_sala = await getGlobalStateSala(sala_id);
+                sendStatusGlobalSala('deploy', sala_id, sendToClient, { setup: status_sala });
+            }
+        }
     }
-
-
-
 }
 
 
 /**
  * Change the internal phase of attacking turn
  * parece que solo lo necesitaremos en la fase de ataque para que todos los usuarios vean que esta pasando y saber cuando el usaurio quiere cambiar
- * 
+ * @param {*} data
+ * @param {*} sendToClient
  */
 
 async function chagenFaseCombat(data, sendToClient){
@@ -690,16 +700,18 @@ async function chagenFaseCombat(data, sendToClient){
 
         //Change the phase
         await matchDB.updateSalaStatusTorn(sala_id, 5);
+
+        //Send the new status to everyone
+        let status_sala = await getGlobalStateSala(sala_id);
+        console.log("STATUS SALA: ",status_sala);
+        sendStatusGlobalSala('reinforce', sala_id, sendToClient, {setup : status_sala} );
+
     }
 }
 
 
 
 //FASE 7 game finish!
-
-
-
-
 
 
 
