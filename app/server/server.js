@@ -17,6 +17,7 @@ const clients = new Map(); // ID -> WebSocket
  * @param {*} message 
  */
 async function sendToClient(clientId, message) {
+	console.log("MESSAGE FINAL: ", message);
 	if (typeof message !== 'string') {
 		message = JSON.stringify(message);
 	}

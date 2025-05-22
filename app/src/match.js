@@ -116,7 +116,7 @@ async function incrementPlayerTorn(sala_id) {
 
     let actual_index = players.findIndex((ele) => ele.skfUser_id == sala.torn_player_id );    
     let new_index = (actual_index+1) % players.length;
-
+    console.log(new_index, actual_index, players);
     await matchDB.updateSalaPlayerTorn(sala_id, players[new_index].skfUser_id);
     
     console.log("PLAYER TORN UPDATED: ", players[new_index]);
@@ -198,7 +198,7 @@ async function faseDeploy(data, sendToClient) {
         }else{
     
             //Check the troops of the players to switch to the new stage of the match!
-            let players = await managerDB.getPlayersInfoFromSala(sala_id);
+            let players = await managerDB.getInfoPlayersSalaUltimateNoBugs(sala_id);
             if(players.every((p) => p.tropes == 0)){
                 //Status 3 first combat!!!
                 await matchDB.updateSalaStatusTorn(sala_id, 3);
@@ -242,8 +242,8 @@ async function faseDeploy(data, sendToClient) {
  * @return {number}
  */
 async function numberOfTroopsDeployCombat(sala_id){
-    let sala = await matchDB.getSalaById(sala_id);
-    let players = await managerDB.getPlayersInfoFromSala(sala_id);
+    let sala = await managerDB.getSalaById(sala_id);
+    let players = await managerDB.getInfoPlayersSalaUltimateNoBugs(sala_id);
     let player = players.find((p) => p.skfUser_id == sala.torn_player_id );
 
     let troops = await matchDB.getPlayerTroops(player.id);
@@ -273,24 +273,24 @@ async function faseDeployCombat(data, sendToClient){
     let token = data.token;
 
     //Checks necessaris que es abans de començar cada fase
-    let valid_state = await checkSalaStateIsAtThePhase(null, sala, 2);
+    let valid_state = await checkSalaStateIsAtThePhase(null, sala, 3);
     let valid_user = await checkValidUserTorn(token, sala_id, sala);
 
     if(valid_state && valid_user){
         //Check if the player can place the sum of the number of troops, if cant place dont place and change to another player torn
         let session = await managerDB.getSessionByToken(token);
-        let player = await matchDB.getPLayerByUserId(session.usuari_id);
-        let troops = await matchDB.getPlayerTroops(player.id);
-        let sum_troops = data.info.deploy.reduce((acum, d) => acum + d.troops, 0);
+        let player = await matchDB.getPLayerByUserId(session.usuari_id, sala_id);
+        let troops = player.tropes;
+        let sum_troops = data.info.deploy.reduce((acum, d) => acum + d.tropes, 0);
         console.log("TOTAL DE TROPES PER INSERTAR: ", sum_troops);
         
         if(troops >= sum_troops){
 
             //Change the countrys, only if the check is valid!
             for(let i = 0; i < data.info.deploy.length ; i++){
-                let own = await matchDB.checkCountryOwner(player.id, country);
+                let own = await matchDB.checkCountryOwner(player.id, data.info.deploy[i].country);
                 if(own){
-                    await matchDB.InsertUpdateOkupaCountry(player.id, data.info.deploy[i].country, data.info.deploy[i].troops);
+                    await matchDB.InsertUpdateOkupaCountry(player.id, data.info.deploy[i].country, data.info.deploy[i].tropes);
                 }
             }
 
@@ -307,6 +307,8 @@ async function faseDeployCombat(data, sendToClient){
         console.log("STATUS SALA: ",status_sala);
         sendStatusGlobalSala('attack', sala_id, sendToClient, { setup: status_sala });
 
+    }else{
+        console.log("REQUEST NOT VALID!");
     }
 
     
@@ -381,37 +383,41 @@ async function faseAttackCombat(data, sendToClient){
     //Checks necessaris que es abans de començar cada fase
     let valid_state = await checkSalaStateIsAtThePhase(null, sala, 4);
     let valid_user = await checkValidUserTorn(token, sala_id, sala);
+    console.log("VALID STATE USER", valid_state, valid_user);
 
     if(valid_state && valid_user){
         let session = await managerDB.getSessionByToken(token);
-        let player = await matchDB.getPLayerByUserId(session.usuari_id);
+        let player = await matchDB.getPLayerByUserId(session.usuari_id, sala_id);
 
-        let attaker = data.info.attaker;
-        let defender = data.info.attaker;
+        let attacker = data.info.attacker;
+        let defender = data.info.defender;
         let troops = data.info.troops;
         let attack_done = false;
 
-        if(attaker == undefined || defender == undefined || troops == undefined){
+        if(attacker == undefined || defender == undefined || troops == undefined){
             return;
         }
 
         let info_global = {};
 
         //Cehck if is the owner of the country!
-        let attaker_own = await matchDB.checkCountryOwner(player.id, attaker);
+        let attacker_own = await matchDB.checkCountryOwner(player.id, attacker);
         let defender_own = await matchDB.checkCountryOwner(player.id, defender);
 
-        if(attaker_own && !defender_own){
+        console.log("ATTACKER_OWN", attacker_own, "Defender_own", defender_own);
+        if(attacker_own && !defender_own){
             //Check if the countrys are neighbours and can attack
 
-            let neighbours = await matchDB.checkIfTheyAreNeighbours(attaker, defender);
+            let neighbours = await matchDB.checkIfTheyAreNeighbours(attacker, defender);
+            console.log("neighbours: ", neighbours, attacker, defender);
             if(neighbours){
                 //Generate the roll of the dice
 
-                let pais_attaker = await matchDB.getPaisByAbr(attaker);
-                pais_attaker = await matchDB.getCountryByIdAndSalaId(pais_attaker.id, sala_id);
+                let pais_attacker = await matchDB.getPaisByAbr(attacker);
+                pais_attacker = await matchDB.getCountryByIdAndSalaId(pais_attacker.id, sala_id);
 
-                if(pais_attaker.tropes > troops){
+                console.log("PAIS_ATTACKER", pais_attacker, troops);
+                if(pais_attacker.tropes > troops){
                     /*
                         Se restan tropas en funcion de quien gana y quien pierde por los dados, 
                         Si el atacante ataca con 3 dados se queda con los dos mas altos y el defensor con los suyos
@@ -455,7 +461,7 @@ async function faseAttackCombat(data, sendToClient){
                     }
 
                     //Normalize the troops of the attacker
-                    attack_troops = (pais_attaker.troops - troops) + attack_troops;
+                    attack_troops = (pais_attacker.troops - troops) + attack_troops;
 
                     console.log("attack_troops", attack_troops);
                     console.log("defender_troops", defender_troops);
@@ -464,7 +470,7 @@ async function faseAttackCombat(data, sendToClient){
                     if(defender_troops == 0){
                         attack_done = true;
 
-                        await matchDB.updatePaisPlayerAndTroops(pais_attaker.pais_id, null, pais_attaker.player_id, attack_troops);
+                        await matchDB.updatePaisPlayerAndTroops(pais_attacker.pais_id, null, pais_attacker.player_id, attack_troops);
                         await matchDB.updatePaisPlayerAndTroops(pais_defender.pais_id, player.id, pais_defender.player_id, defender_troops);
                         
                         //Send client the new phase status!!! and wait to change the country troops
@@ -472,7 +478,7 @@ async function faseAttackCombat(data, sendToClient){
                         let info = {
                             setup: status_sala,
                             attacker:{
-                                country:pais_attaker.abr,
+                                country:pais_attacker.abr,
                                 dice:attacker_dice,
                                 troops:attack_troops,
                                 player_id: player.id,
@@ -492,7 +498,7 @@ async function faseAttackCombat(data, sendToClient){
 
                     }else{
                         
-                        await matchDB.updatePaisPlayerAndTroops(pais_attaker.pais_id, null, pais_attaker.player_id, attack_troops);
+                        await matchDB.updatePaisPlayerAndTroops(pais_attacker.pais_id, null, pais_attacker.player_id, attack_troops);
                         await matchDB.updatePaisPlayerAndTroops(pais_defender.pais_id, null, pais_defender.player_id, defender_troops);
                         
                         //Send the new status to everyone
@@ -500,7 +506,7 @@ async function faseAttackCombat(data, sendToClient){
                         info_global = {
                             setup: status_sala,
                             attacker:{
-                                country:pais_attaker.abr,
+                                country:pais_attacker.abr,
                                 dice:attacker_dice,
                                 troops:attack_troops,
                                 player_id: player.id,
@@ -558,7 +564,7 @@ async function faseMoveCombat(data, sendToClient){
 
     if(valid_state && valid_user){
         let session = await managerDB.getSessionByToken(token);
-        let player = await matchDB.getPLayerByUserId(session.usuari_id);
+        let player = await matchDB.getPLayerByUserId(session.usuari_id, sala_id);
 
         //     {
         // action:''attack_reinforce",

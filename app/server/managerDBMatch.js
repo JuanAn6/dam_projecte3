@@ -245,8 +245,6 @@ const checkCountryOwner = async (player_id, country) =>{
  */
 const getPlayerTroops = async (player_id) =>{
 	try {
-		let pais = await getPaisByAbr(country); 
-		if(pais == null) return null;
 
 		let sql = `SELECT sum(tropes) as sum FROM okupa WHERE player_id = ?`;
 		const [rows] = await db.query(sql, [player_id] );
@@ -258,7 +256,7 @@ const getPlayerTroops = async (player_id) =>{
 		}
 
 	} catch (err) {
-		console.error('❌ Error checkCountryEmpty!', err.message);
+		console.error('❌ Error getPlayerTroops!', err.message);
 	}
 }
 
@@ -370,7 +368,7 @@ const getCountryByIdAndSalaId = async (pais_id, sala_id) =>{
 		let ids = players.map((p) => { return p.id });
 		let placeholders = ids.map(() => '?').join(', ');
 		
-		let sql = `SELECT * FROM okupa WHERE player_id IN (${placeholders}) and country_id = ? `;
+		let sql = `SELECT * FROM okupa WHERE player_id IN (${placeholders}) and pais_id = ? `;
 		let	[rows] = await db.query(sql, [...placeholders, pais_id] );
 		
 		if (rows.length > 0) {			
@@ -380,7 +378,7 @@ const getCountryByIdAndSalaId = async (pais_id, sala_id) =>{
 		}
 		
 	} catch (err) {
-		console.error('❌ Error updatePaisPlayerAndTroops!', err.message);
+		console.error('❌ Error getCountryByIdAndSalaId!', err.message);
 	}
 
 
