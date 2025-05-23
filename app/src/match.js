@@ -533,14 +533,21 @@ async function faseAttackCombat(data, sendToClient){
             //Check if game finish!
             console.log("CHECK GAME FINISH");
 
-            
+            let count_countris = await matchDB.countPlayerCountrysHas(player.id);
+            console.log("count countrys: ", count_countris);
+            let game_end = count_countris == 42;
+
+            if(game_end){
+                sendStatusGlobalSala('end_game', sala_id, sendToClient, {} );
+            }else{
+                let status_sala = await getGlobalStateSala(sala_id);
+                console.log("STATUS SALA: ",status_sala);
+                sendStatusGlobalSala('attack_reinforce', sala_id, sendToClient, status_sala );    
+            }
 
         }
 
-
         if(!attack_done){
-            let status_sala = await getGlobalStateSala(sala_id);
-            console.log("STATUS SALA: ",status_sala);
             sendStatusGlobalSala('attack', sala_id, sendToClient, info_global );
         }
 

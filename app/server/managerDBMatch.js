@@ -427,6 +427,27 @@ const getNeighboursOfCountry = async (country_abr) => {
     }
 };
 
+/**
+ * Get the number of countrys has the player
+ * @param {*} player_id 
+ * @returns 
+ */
+const countPlayerCountrysHas = async (player_id) => {
+	try {
+        
+        let sql = `SELECT count(*) as count FROM okupa WHERE player_id = ?`;
+		const [rows] = await db.query(sql, [player_id] );
+
+		if (rows.length > 0) {
+			return rows[0].count;
+		} else {
+			return false;
+		}
+    } catch (err) {
+        console.error('❌ Error CountPlayerCountrysHas!', err.message);
+        return [];
+    }
+}
 
 /**
  * BFS para comprobar si hay camino entre dos países solo por países del jugador.
@@ -472,5 +493,6 @@ module.exports = {
 	getCountryByIdAndSalaId,
 	hasPathBetweenCountries,
 	getPlayerCountriesInSala,
-	getNeighboursOfCountry
+	getNeighboursOfCountry,
+	countPlayerCountrysHas
 };
