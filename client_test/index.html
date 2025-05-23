@@ -21,7 +21,7 @@
 
     socket.onmessage = event => {
       log('📥 Recibido: ' + event.data);
-    };xz
+    };
 
     socket.onclose = () => {
       log('❌ Conexión cerrada');
@@ -78,8 +78,19 @@
         //   }
         // }
 
-        let obj = {"action":"deploy","token":"cristian1747241693493","info":{"sala":6,"country":"SE"}}
+        //let obj = {"action":"deploy","token":"cristian1747241693493","info":{"sala":6,"country":"SE"}}
 
+        let obj = {
+          token:"cristian1747931920993",
+          action:"invade",
+                info:{
+                  sala: 32,
+                  attacker: 'GL',
+                  troops:3,
+                  defender: 'IS',
+              }
+        }  
+        console.log(obj);
         socket.send(JSON.stringify(obj));
 
 

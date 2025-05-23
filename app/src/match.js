@@ -447,6 +447,9 @@ async function faseAttackCombat(data, sendToClient){
                     console.log("attacker_dice", attacker_dice);
                     console.log("defender_dice", defender_dice);
 
+                    let attack_troops = pais_attacker.tropes;
+                    let defender_troops = pais_defender.tropes;
+
                     //TO DO logica de los dados
                     let aux = defender_dice.length > attacker_dice.length ? attacker_dice.length : defender_dice.length;
 
@@ -459,9 +462,6 @@ async function faseAttackCombat(data, sendToClient){
                         }
 
                     }
-
-                    //Normalize the troops of the attacker
-                    attack_troops = (pais_attacker.troops - troops) + attack_troops;
 
                     console.log("attack_troops", attack_troops);
                     console.log("defender_troops", defender_troops);
@@ -533,10 +533,13 @@ async function faseAttackCombat(data, sendToClient){
             //Check if game finish!
             console.log("CHECK GAME FINISH");
 
+            
+
         }
 
 
         if(!attack_done){
+            let status_sala = await getGlobalStateSala(sala_id);
             console.log("STATUS SALA: ",status_sala);
             sendStatusGlobalSala('attack', sala_id, sendToClient, info_global );
         }

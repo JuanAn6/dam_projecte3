@@ -369,8 +369,9 @@ const getCountryByIdAndSalaId = async (pais_id, sala_id) =>{
 		let placeholders = ids.map(() => '?').join(', ');
 		
 		let sql = `SELECT * FROM okupa WHERE player_id IN (${placeholders}) and pais_id = ? `;
-		let	[rows] = await db.query(sql, [...placeholders, pais_id] );
-		
+		let	[rows] = await db.query(sql, [...ids, pais_id] );
+		console.log("getCountryByIdAndSalaId", sql);
+		console.log("getCountryByIdAndSalaId", rows);
 		if (rows.length > 0) {			
 			return rows[0];
 		} else {
