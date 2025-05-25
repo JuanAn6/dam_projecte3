@@ -414,7 +414,7 @@ async function faseAttackCombat(data, sendToClient){
                 //Generate the roll of the dice
 
                 let pais_attacker_db = await matchDB.getPaisByAbr(attacker);
-                let pais_attacker = await matchDB.getCountryByIdAndSalaId(pais_defender_db.id, sala_id);
+                let pais_attacker = await matchDB.getCountryByIdAndSalaId(pais_attacker_db.id, sala_id);
 
                 console.log("PAIS_ATTACKER", pais_attacker, troops);
                 if(pais_attacker.tropes > troops){
