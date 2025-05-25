@@ -413,8 +413,8 @@ async function faseAttackCombat(data, sendToClient){
             if(neighbours){
                 //Generate the roll of the dice
 
-                let pais_attacker = await matchDB.getPaisByAbr(attacker);
-                pais_attacker = await matchDB.getCountryByIdAndSalaId(pais_attacker.id, sala_id);
+                let pais_attacker_db = await matchDB.getPaisByAbr(attacker);
+                let pais_attacker = await matchDB.getCountryByIdAndSalaId(pais_defender_db.id, sala_id);
 
                 console.log("PAIS_ATTACKER", pais_attacker, troops);
                 if(pais_attacker.tropes > troops){
@@ -436,8 +436,8 @@ async function faseAttackCombat(data, sendToClient){
                         El atacante pierde 2 tropas y el defensor ninguna
                         ...
                     */
-                    let pais_defender = await matchDB.getPaisByAbr(defender);
-                    pais_defender = await matchDB.getCountryByIdAndSalaId(pais_defender.id, sala_id);
+                    let pais_defender_db = await matchDB.getPaisByAbr(defender);
+                    let pais_defender = await matchDB.getCountryByIdAndSalaId(pais_defender_db.id, sala_id);
                     
                    
                     let attacker_dice = generateRandomDice(troops, 'attacker');
@@ -475,23 +475,23 @@ async function faseAttackCombat(data, sendToClient){
                         
                         //Send client the new phase status!!! and wait to change the country troops
                         let status_sala = await getGlobalStateSala(sala_id);
-                        let info = {
+                        info_global = {
                             setup: status_sala,
                             attacker:{
-                                country:pais_attacker.abr,
+                                country:pais_attacker_db.abr,
                                 dice:attacker_dice,
                                 troops:attack_troops,
                                 player_id: player.id,
                             },
                             defender:{
-                                country:pais_defender.abr,
+                                country:pais_defender_db.abr,
                                 dice:defender_dice,
                                 troops:defender_troops,
                                 player_id: player.id,
                             }
                         }
 
-                        sendToClient(session.uid, { response:{ fase: 'attack', active_player: sala.torn_player_id, info: info } })
+                        //sendToClient(session.uid, { response:{ fase: 'attack', active_player: sala.torn_player_id, info: info } })
 
                         //Change to the new mig phase
                         await matchDB.updateSalaStatusTorn(sala_id, 5);
@@ -506,13 +506,13 @@ async function faseAttackCombat(data, sendToClient){
                         info_global = {
                             setup: status_sala,
                             attacker:{
-                                country:pais_attacker.abr,
+                                country:pais_attacker_db.abr,
                                 dice:attacker_dice,
                                 troops:attack_troops,
                                 player_id: player.id,
                             },
                             defender:{
-                                country:pais_defender.abr,
+                                country:pais_defender_db.abr,
                                 dice:defender_dice,
                                 troops:defender_troops,
                                 player_id: player.id,
@@ -540,9 +540,7 @@ async function faseAttackCombat(data, sendToClient){
             if(game_end){
                 sendStatusGlobalSala('end_game', sala_id, sendToClient, {} );
             }else{
-                let status_sala = await getGlobalStateSala(sala_id);
-                console.log("STATUS SALA: ",status_sala);
-                sendStatusGlobalSala('attack_reinforce', sala_id, sendToClient, status_sala );    
+                sendStatusGlobalSala('attack_reinforce', sala_id, sendToClient, info_global );    
             }
 
         }
