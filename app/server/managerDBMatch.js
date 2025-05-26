@@ -65,6 +65,21 @@ const getCountrysFromPlayer = async (player_id) => {
 	}
 }
 
+const getPLayerById = async (player_id) => {
+	try {
+		const [rows] = await db.query(`SELECT * FROM jugador WHERE id = ?`, [player_id] );
+
+		if (rows.length > 0) {
+			return rows[0];
+		} else {
+			return null;
+		}
+
+	} catch (err) {
+		console.error('❌ Error getPLayerById!', err.message);
+	}
+}
+
 const getPLayerByUserId = async (user_id, sala_id) => {
 	try {
 		const [rows] = await db.query(`SELECT * FROM jugador WHERE skfUser_id = ? and skfPartida_id = ?`, [user_id, sala_id] );
@@ -105,7 +120,7 @@ const SetTropesPlayerByPlayerId = async(player_id, tropes ) =>{
  * This function sum the troops to the country, 
  * 	if the country has 10 and yo pass +1 becomes 11, if the country has 10 and you pass -2 becomes 8
  * @param {*} player_id 
- * @param {*} country (id)
+ * @param {*} country (abr)
  * @param {*} trops 
  * @returns RETURN NULL IS ERROR
  */
@@ -113,7 +128,7 @@ const SetTropesPlayerByPlayerId = async(player_id, tropes ) =>{
 const InsertUpdateOkupaCountry = async (player_id, country, trops) => {
 	try {
 		let pais = await getPaisByAbr(country); 
-		
+
 		if(pais == null) return null;
 
 		const [rows] = await db.query(`SELECT * FROM okupa WHERE player_id = ? and pais_id = ? `, [player_id, pais.id] );
@@ -307,9 +322,9 @@ const checkIfTheyAreNeighbours = async (country1, country2) =>{
 		let pais2 = await getPaisByAbr(country2);
 		if(pais1 == null || pais2 == null) return false;
 		
-		let sql = `SELECT count(*) as "count" FROM frontera WHERE pais1_id = ? AND pais2_id = ?`;
+		let sql = `SELECT count(*) as "count" FROM frontera WHERE pais1_id = ? AND pais2_id = ? OR pais1_id = ? AND pais2_id = ?`;
 
-		const [rows] = await db.query(sql, [pais1.id, pais2.id] );
+		const [rows] = await db.query(sql, [pais1.id, pais2.id, pais2.id,pais1.id] );
 
 		if (rows.length > 0) {
 			return rows[0].count > 0;
@@ -320,6 +335,7 @@ const checkIfTheyAreNeighbours = async (country1, country2) =>{
 	} catch (err) {
 		console.error('❌ Error checkIfTheyAreNeighbours!', err.message);
 	}
+
 }
 
 
@@ -334,6 +350,8 @@ const checkIfTheyAreNeighbours = async (country1, country2) =>{
 
 const updatePaisPlayerAndTroops = async (country_id, player_id = null, old_player_id, troops) =>{
 	try {
+		console.log(country_id, player_id, old_player_id, troops);
+		
 		let rows;
 		if(player_id == null){
 			let sql = `UPDATE okupa SET tropes = ? WHERE player_id = ? and pais_id = ?`;
@@ -417,8 +435,8 @@ const getNeighboursOfCountry = async (country_abr) => {
         const pais = await getPaisByAbr(country_abr);
         if (!pais) return [];
         const [rows] = await db.query(
-            `SELECT p2.abr FROM frontera f JOIN pais p2 ON f.pais2_id = p2.id WHERE f.pais1_id = ?`,
-            [pais.id]
+            `SELECT DISTINCT p2.abr FROM frontera f JOIN pais p2 ON f.pais2_id = p2.id OR f.pais1_id = p2.id WHERE f.pais1_id = ? OR f.pais2_id = ?`,
+            [pais.id, pais.id]
         );
         return rows.map(r => r.abr);
     } catch (err) {
@@ -494,5 +512,6 @@ module.exports = {
 	hasPathBetweenCountries,
 	getPlayerCountriesInSala,
 	getNeighboursOfCountry,
-	countPlayerCountrysHas
+	countPlayerCountrysHas,
+	getPLayerById
 };

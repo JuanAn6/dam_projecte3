@@ -388,7 +388,7 @@ async function faseAttackCombat(data, sendToClient){
     if(valid_state && valid_user){
         let session = await managerDB.getSessionByToken(token);
         let player = await matchDB.getPLayerByUserId(session.usuari_id, sala_id);
-
+        console.log("PLAYER!", player);
         let attacker = data.info.attacker;
         let defender = data.info.defender;
         let troops = data.info.troops;
@@ -465,6 +465,8 @@ async function faseAttackCombat(data, sendToClient){
 
                     console.log("attack_troops", attack_troops);
                     console.log("defender_troops", defender_troops);
+
+                    let player_defender = await matchDB.getPLayerById(pais_defender.player_id);
                     
                     //Change all the countrys
                     if(defender_troops == 0){
@@ -473,6 +475,19 @@ async function faseAttackCombat(data, sendToClient){
                         await matchDB.updatePaisPlayerAndTroops(pais_attacker.pais_id, null, pais_attacker.player_id, attack_troops);
                         await matchDB.updatePaisPlayerAndTroops(pais_defender.pais_id, player.id, pais_defender.player_id, defender_troops);
                         
+                        console.log({attacker:{
+                            country:pais_attacker_db.abr,
+                            dice:attacker_dice,
+                            troops:attack_troops,
+                            player_id: player.skfUser_id,
+                        }});
+                        console.log({defender:{
+                            country:pais_defender_db.abr,
+                            dice:defender_dice,
+                            troops:defender_troops,
+                            player_id: player.skfUser_id,
+                        }});
+
                         //Send client the new phase status!!! and wait to change the country troops
                         let status_sala = await getGlobalStateSala(sala_id);
                         info_global = {
@@ -481,13 +496,15 @@ async function faseAttackCombat(data, sendToClient){
                                 country:pais_attacker_db.abr,
                                 dice:attacker_dice,
                                 troops:attack_troops,
-                                player_id: player.id,
+                                player_id: player.skfUser_id,
                             },
                             defender:{
                                 country:pais_defender_db.abr,
                                 dice:defender_dice,
                                 troops:defender_troops,
-                                player_id: player.id,
+                                //player_id: player.id,
+                                player_id: player.skfUser_id,
+
                             }
                         }
 
@@ -501,6 +518,19 @@ async function faseAttackCombat(data, sendToClient){
                         await matchDB.updatePaisPlayerAndTroops(pais_attacker.pais_id, null, pais_attacker.player_id, attack_troops);
                         await matchDB.updatePaisPlayerAndTroops(pais_defender.pais_id, null, pais_defender.player_id, defender_troops);
                         
+                        console.log({attacker:{
+                            country:pais_attacker_db.abr,
+                            dice:attacker_dice,
+                            troops:attack_troops,
+                            player_id: player.skfUser_id,
+                        }});
+                        console.log({defender:{
+                            country:pais_defender_db.abr,
+                            dice:defender_dice,
+                            troops:defender_troops,
+                            player_id: player_defender.skfUser_id,
+                        }});
+
                         //Send the new status to everyone
                         let status_sala = await getGlobalStateSala(sala_id);
                         info_global = {
@@ -509,13 +539,16 @@ async function faseAttackCombat(data, sendToClient){
                                 country:pais_attacker_db.abr,
                                 dice:attacker_dice,
                                 troops:attack_troops,
-                                player_id: player.id,
+                                //player_id: player.id,
+                                player_id: player.skfUser_id,
+
                             },
                             defender:{
                                 country:pais_defender_db.abr,
                                 dice:defender_dice,
                                 troops:defender_troops,
-                                player_id: player.id,
+                                //player_id: player.id,
+                                player_id: player_defender.skfUser_id,
                             }
                         }
 
@@ -569,7 +602,7 @@ async function faseMoveCombat(data, sendToClient){
     //Checks necessaris que es abans de començar cada fase
     let valid_state = await checkSalaStateIsAtThePhase(null, sala, 5);
     let valid_user = await checkValidUserTorn(token, sala_id, sala);
-
+    console.log("VALID_STATE AND VALID USER", valid_state, valid_user);
     if(valid_state && valid_user){
         let session = await managerDB.getSessionByToken(token);
         let player = await matchDB.getPLayerByUserId(session.usuari_id, sala_id);
@@ -586,14 +619,14 @@ async function faseMoveCombat(data, sendToClient){
 
         let from_own = await matchDB.checkCountryOwner(player.id, data.info.from);
         let to_own = await matchDB.checkCountryOwner(player.id, data.info.to);
-
-        if(from_own && !to_own){
+        console.log("from_own", from_own, "to_own", to_own);
+        if(from_own && to_own){
             //Check if the countrys are neighbours and can attack
 
             let neighbours = await matchDB.checkIfTheyAreNeighbours( data.info.from, data.info.to);
+            console.log("neighbours", neighbours);
             if(neighbours){
-                //Generate the roll of the dice
-
+                
                 let pais_from = await matchDB.getPaisByAbr(data.info.from);
                 pais_from = await matchDB.getCountryByIdAndSalaId(pais_from.id, sala_id);
 
@@ -602,10 +635,16 @@ async function faseMoveCombat(data, sendToClient){
 
                 //Check if has enough toops in the country
                 let troops = data.info.troops;
+                console.log("pais_from", pais_from, "pais_to", pais_to);
+
                 if(pais_from.tropes - troops >= 1 && pais_to.tropes == 0){
+                    console.log("ENTRA");
+
                     //Move everything
-                    await matchDB.InsertUpdateOkupaCountry(player.id, pais_from.id, (troops*-1))
-                    await matchDB.InsertUpdateOkupaCountry(player.id, pais_to.id, troops)
+                    console.log("MOVE", player.id, data.info.from, (troops*-1));
+                    await matchDB.InsertUpdateOkupaCountry(player.id, data.info.from, (troops*-1))
+                    console.log("MOVE2",player.id, data.info.to, troops);
+                    await matchDB.InsertUpdateOkupaCountry(player.id, data.info.to, troops)
 
                     //Send the new status to everyone
                     let status_sala = await getGlobalStateSala(sala_id);
@@ -616,14 +655,20 @@ async function faseMoveCombat(data, sendToClient){
                     await matchDB.updateSalaStatusTorn(sala_id, 4);
 
                 }else{
+                    console.log("NO ENTRA");
+                    //Si me pasa mas de las que debe muevo el maximo
+                    console.log("MOVE", player.id, data.info.from, ((pais_from.tropes-1)*-1));
+                    await matchDB.InsertUpdateOkupaCountry(player.id, data.info.from, ((pais_from.tropes-1)*-1));
+                    console.log("Move2", player.id, data.info.to, (pais_from.tropes-1));
+                    await matchDB.InsertUpdateOkupaCountry(player.id, data.info.to, (pais_from.tropes-1));
 
                     //Send the new status to everyone
                     let status_sala = await getGlobalStateSala(sala_id);
                     console.log("STATUS SALA: ",status_sala);
-                    sendStatusGlobalSala('reinforce', sala_id, sendToClient, {setup : status_sala} );
+                    sendStatusGlobalSala('attack', sala_id, sendToClient, {setup : status_sala} );
 
                     //Change to the new mig phase
-                    //await matchDB.updateSalaStatusTorn(sala_id, 5);
+                    await matchDB.updateSalaStatusTorn(sala_id, 4);
 
                 }
 
@@ -654,27 +699,45 @@ async function faseReinforceCombat(data, sendToClient){
     //Checks necessaris que es abans de començar cada fase
     let valid_state = await checkSalaStateIsAtThePhase(null, sala, 6);
     let valid_user = await checkValidUserTorn(token, sala_id, sala);
-
+    
+    console.log("VALID_STATE AND VALID USER", valid_state, valid_user);
     if(valid_state && valid_user){
         let session = await managerDB.getSessionByToken(token);
         let player = await matchDB.getPLayerByUserId(session.usuari_id, sala_id);
+        const troops = data.info.troops;
+
+        if(troops == 0){
+            // 5. Change the player turn and calculate the new troops
+            await incrementPlayerTorn(sala_id);
+            
+            //Change to the new mig phase
+            await matchDB.updateSalaStatusTorn(sala_id, 3);
+
+            // 6. Enviar estado actualizado
+            let status_sala = await getGlobalStateSala(sala_id);
+            let troops_aux = await numberOfTroopsDeployCombat(sala_id);
+            console.log("CHANGE deploy comabt!");
+            sendStatusGlobalSala('deploy_combat', sala_id, sendToClient, { n_tropes: troops_aux, setup: status_sala});
+            return;
+        }
 
         const from = data.info.from;
         const to = data.info.to;
-        const troops = data.info.troops;
 
         // 1. Check if the owner is the player
         const from_own = await matchDB.checkCountryOwner(player.id, from);
         const to_own = await matchDB.checkCountryOwner(player.id, to);
+        console.log("from_own", from_own, "to_own", from_own);
 
         // 2. Check if has enough troops in the country
         const pais_from = await matchDB.getPaisByAbr(from);
         const okupa_from = await matchDB.getCountryByIdAndSalaId(pais_from.id, sala_id);
+        console.log("pias_from", pais_from, "okupa_from", okupa_from);
 
         if (from_own && to_own && okupa_from.tropes > troops && troops > 0) {
             // 3. Check if the countries has a path to go
             const pathExists = await matchDB.hasPathBetweenCountries(player.id, from, to, sala_id);
-
+            console.log("PATHExists", pathExists);
             if (pathExists) {
                 // 4. Move everything
                 await matchDB.InsertUpdateOkupaCountry(player.id, from, -troops);
@@ -682,11 +745,16 @@ async function faseReinforceCombat(data, sendToClient){
 
                 // 5. Change the player turn and calculate the new troops
                 await incrementPlayerTorn(sala_id);
-                // (Opcional: recalcular tropas si es necesario)
+                
+                //Change to the new mig phase
+                await matchDB.updateSalaStatusTorn(sala_id, 3);
 
                 // 6. Enviar estado actualizado
                 let status_sala = await getGlobalStateSala(sala_id);
-                sendStatusGlobalSala('deploy', sala_id, sendToClient, { setup: status_sala });
+                let troops_aux = await numberOfTroopsDeployCombat(sala_id);
+                console.log("CHANGE deploy comabt!");
+                sendStatusGlobalSala('deploy_combat', sala_id, sendToClient, { n_tropes: troops_aux, setup: status_sala});
+                return;
             }
         }
     }
@@ -713,7 +781,7 @@ async function chagenFaseCombat(data, sendToClient){
     if(valid_state && valid_user){
 
         //Change the phase
-        await matchDB.updateSalaStatusTorn(sala_id, 5);
+        await matchDB.updateSalaStatusTorn(sala_id, 6);
 
         //Send the new status to everyone
         let status_sala = await getGlobalStateSala(sala_id);
