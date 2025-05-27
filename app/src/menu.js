@@ -19,7 +19,7 @@ async function login(user, password, clientId){
         let now = new Date();
         let token = aux_user.login+""+now.getTime();
         obj.status = 200;
-        obj.response = {message: "Login success!", token: token, id: aux_user.id };  
+        obj.response = {message: "Login success!", token: token, id: aux_user.id, user:aux_user };  
         
         managerDB.insertUserToken(aux_user.id, token, clientId);
         return obj;
